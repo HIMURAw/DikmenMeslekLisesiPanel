@@ -1,0 +1,2 @@
+# DikmenMeslekLisesiPanel
+Dikmen MTAL
