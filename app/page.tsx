@@ -35,7 +35,7 @@ const DAYS   = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function LiveClock() {
-  const [time, setTime] = useState(new Date(2026, 2, 15, 13, 34, 47));
+  const [time, setTime] = useState(new Date());
   useEffect(() => {
     const t = setInterval(() => setTime(d => new Date(d.getTime() + 1000)), 1000);
     return () => clearInterval(t);
@@ -52,7 +52,7 @@ function LiveClock() {
         <span className="text-2xl text-slate-400">{pad(time.getSeconds())}</span>
       </p>
       <p className="text-[12px] text-slate-500 mt-1 tracking-wide">
-        15 Mart 2026,&nbsp;{dayNames[time.getDay()]}
+        {time.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })},&nbsp;{dayNames[time.getDay()]}
       </p>
     </div>
   );
@@ -88,7 +88,7 @@ function LessonStatusBadge({ status }: { status: LessonStatus }) {
 
 function CalendarWidget() {
   const { data } = useStore();
-  const today = new Date(2026, 2, 15);
+  const today = new Date();
   const [current, setCurrent] = useState(today);
   const year  = current.getFullYear();
   const month = current.getMonth();
@@ -279,6 +279,18 @@ export default function Dashboard() {
     );
   }
 
+  const getLocalDateString = (date: Date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = getLocalDateString();
+  const tomorrowObj = new Date();
+  tomorrowObj.setDate(tomorrowObj.getDate() + 1);
+  const tomorrowStr = getLocalDateString(tomorrowObj);
+
   return (
     <div className="h-screen bg-[#07101e] text-white flex flex-col overflow-hidden">
 
@@ -416,43 +428,97 @@ export default function Dashboard() {
 
             {/* Nöbetçiler */}
             <div className="rounded-2xl bg-[#0c1829] border border-white/[0.06] shadow-xl p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center">
-                  <LucideIcons.Shield className="w-4 h-4 text-amber-400" />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center">
+                    <LucideIcons.Shield className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <h2 className="text-[15px] font-bold text-white">Nöbetçi Çizelgesi</h2>
                 </div>
-                <h2 className="text-[15px] font-bold text-white">Bugünkü Nöbetçiler</h2>
               </div>
-              <div className="space-y-2">
-                {data.dutyOfficers.map((o) => (
-                  <div
-                    key={o.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all
-                      ${o.active
-                        ? "bg-emerald-500/[0.05] border-emerald-500/15"
-                        : "bg-white/[0.02] border-white/[0.05]"}`}
-                  >
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-black shrink-0
-                        ${o.active ? "bg-amber-500/20 text-amber-400" : "bg-slate-700/40 text-slate-500"}`}
-                    >
-                      {o.name[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-white leading-tight truncate">{o.name}</p>
-                      <p className="text-[11px] text-slate-500 truncate">{o.area}</p>
-                    </div>
-                    <div className="flex flex-col items-end shrink-0 gap-0.5">
-                      <span className="text-[10px] text-slate-500 font-mono">{o.shift}</span>
-                      {o.active
-                        ? <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+
+              <div className="space-y-6">
+                {/* ── Bugün ── */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="w-1.5 h-3 rounded-full bg-violet-500" />
+                    <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Bugün</h3>
+                    <span className="text-[10px] text-slate-600 font-medium ml-auto">
+                      {new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {data.dutyOfficers
+                      .filter(o => o.date === todayStr)
+                      .map((o) => (
+                      <div
+                        key={o.id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border bg-emerald-500/[0.03] border-emerald-500/10 transition-all`}
+                      >
+                        <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[13px] font-black shrink-0">
+                          {o.name[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold text-white leading-tight truncate">{o.name}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{o.area}</p>
+                        </div>
+                        <div className="flex flex-col items-end shrink-0 gap-0.5">
+                          <span className="text-[10px] text-slate-500 font-mono">{o.shift}</span>
+                          <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                             <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
                             Görevde
                           </span>
-                        : <span className="text-[10px] text-slate-600">Bekliyor</span>
-                      }
-                    </div>
+                        </div>
+                      </div>
+                    ))}
+                    {data.dutyOfficers.filter(o => o.date === todayStr).length === 0 && (
+                      <div className="p-4 rounded-xl border border-dashed border-white/5 flex flex-col items-center justify-center text-slate-600">
+                        <LucideIcons.UserX className="w-5 h-5 mb-1 opacity-20" />
+                        <span className="text-[10px] font-medium">Bugün için nöbetçi atanmadı</span>
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
+
+                {/* ── Yarın ── */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="w-1.5 h-3 rounded-full bg-slate-700" />
+                    <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">Yarın</h3>
+                    <span className="text-[10px] text-slate-700 font-medium ml-auto">
+                      {new Date(tomorrowStr).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 opacity-60 grayscale-[0.5]">
+                    {data.dutyOfficers
+                      .filter(o => o.date === tomorrowStr)
+                      .map((o) => (
+                      <div
+                        key={o.id}
+                        className="flex items-center gap-3 p-3 rounded-xl border bg-white/[0.02] border-white/[0.05]"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center text-[13px] font-black shrink-0">
+                          {o.name[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold text-white leading-tight truncate">{o.name}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{o.area}</p>
+                        </div>
+                        <div className="flex flex-col items-end shrink-0 gap-0.5">
+                          <span className="text-[10px] text-slate-500 font-mono">{o.shift}</span>
+                          <span className="text-[10px] text-slate-600 font-bold italic">Planlandı</span>
+                        </div>
+                      </div>
+                    ))}
+                    {data.dutyOfficers.filter(o => o.date === tomorrowStr).length === 0 && (
+                      <div className="p-4 rounded-xl border border-dashed border-white/5 flex flex-col items-center justify-center text-slate-700/50">
+                        <span className="text-[10px] font-medium text-center">Yarın henüz planlanmadı</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 

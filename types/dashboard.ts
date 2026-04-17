@@ -28,6 +28,7 @@ export interface DutyOfficer {
   area: string;
   shift: string;
   active: boolean;
+  date: string; // YYYY-MM-DD format
 }
 
 export interface StatItem {
