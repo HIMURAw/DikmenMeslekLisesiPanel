@@ -206,19 +206,19 @@ export default function AdminPage() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-400">Duyurular</span>
-                        <span className="text-xs font-black text-white">{data.announcements.length}</span>
+                        <span className="text-xs font-black text-white">{(data.announcements || []).length}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-400">Nöbetçiler</span>
-                        <span className="text-xs font-black text-white">{data.dutyOfficers.length}</span>
+                        <span className="text-xs font-black text-white">{(data.dutyOfficers || []).length}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-400">Dersler</span>
-                        <span className="text-xs font-black text-white">{data.lessons.length}</span>
+                        <span className="text-xs font-black text-white">{(data.lessons || []).length}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-400">Öğretmenler</span>
-                        <span className="text-xs font-black text-white">{data.teachers.length}</span>
+                        <span className="text-xs font-black text-white">{(data.teachers || []).length}</span>
                       </div>
                     </div>
                   </div>
@@ -237,13 +237,13 @@ export default function AdminPage() {
                     <button onClick={() => setActiveTab("announcements")} className="text-[10px] font-bold text-slate-500 hover:text-white transition-colors">Yönet</button>
                   </div>
                   <div className="space-y-3">
-                    {data.announcements.slice(0, 3).map(a => (
+                    {(data.announcements || []).slice(0, 3).map(a => (
                       <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.03]">
                         <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] text-slate-400">📢</div>
                         <p className="text-xs font-bold text-slate-300 truncate">{a.title}</p>
                       </div>
                     ))}
-                    {data.announcements.length === 0 && <p className="text-[10px] text-slate-600 text-center py-4">Duyuru bulunmuyor</p>}
+                    {(data.announcements || []).length === 0 && <p className="text-[10px] text-slate-600 text-center py-4">Duyuru bulunmuyor</p>}
                   </div>
                 </div>
 
@@ -257,7 +257,7 @@ export default function AdminPage() {
                     <button onClick={() => setActiveTab("duty")} className="text-[10px] font-bold text-slate-500 hover:text-white transition-colors">Yönet</button>
                   </div>
                   <div className="space-y-3">
-                    {data.dutyOfficers.filter(o => o.date === new Date().toISOString().split('T')[0]).map(o => (
+                    {(data.dutyOfficers || []).filter(o => o.date === new Date().toISOString().split('T')[0]).map(o => (
                       <div key={o.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.03]">
                         <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-[10px] font-black">{o.name[0]}</div>
                         <div className="min-w-0">
@@ -266,7 +266,7 @@ export default function AdminPage() {
                         </div>
                       </div>
                     ))}
-                    {data.dutyOfficers.filter(o => o.date === new Date().toISOString().split('T')[0]).length === 0 && (
+                    {(data.dutyOfficers || []).filter(o => o.date === new Date().toISOString().split('T')[0]).length === 0 && (
                       <p className="text-[10px] text-slate-600 text-center py-4">Bugün için görevli atanmadı</p>
                     )}
                   </div>
@@ -274,13 +274,13 @@ export default function AdminPage() {
               </div>
             </div>
           )}
-          {activeTab === "stats" && <StatsEditor data={data.stats} onUpdate={(val) => updateData("stats", val)} />}
-          {activeTab === "announcements" && <AnnouncementsEditor data={data.announcements} onUpdate={(val) => updateData("announcements", val)} />}
-          {activeTab === "lessons" && <LessonsEditor data={data.lessons} onUpdate={(val) => updateData("lessons", val)} />}
-          {activeTab === "duty" && <DutyEditor data={data.dutyOfficers} onUpdate={(val) => updateData("dutyOfficers", val)} />}
-          {activeTab === "departments" && <DepartmentsEditor data={data.departments} onUpdate={(val) => updateData("departments", val)} />}
-          {activeTab === "calendar" && <CalendarEditor data={data.calendarEvents} onUpdate={(val) => updateData("calendarEvents", val)} />}
-          {activeTab === "teachers" && <TeachersEditor data={data.teachers} onUpdate={(val) => updateData("teachers", val)} />}
+          {activeTab === "stats" && <StatsEditor data={data.stats || []} onUpdate={(val) => updateData("stats", val)} />}
+          {activeTab === "announcements" && <AnnouncementsEditor data={data.announcements || []} onUpdate={(val) => updateData("announcements", val)} />}
+          {activeTab === "lessons" && <LessonsEditor data={data.lessons || []} onUpdate={(val) => updateData("lessons", val)} />}
+          {activeTab === "duty" && <DutyEditor data={data.dutyOfficers || []} onUpdate={(val) => updateData("dutyOfficers", val)} />}
+          {activeTab === "departments" && <DepartmentsEditor data={data.departments || []} onUpdate={(val) => updateData("departments", val)} />}
+          {activeTab === "calendar" && <CalendarEditor data={data.calendarEvents || []} onUpdate={(val) => updateData("calendarEvents", val)} />}
+          {activeTab === "teachers" && <TeachersEditor data={data.teachers || []} onUpdate={(val) => updateData("teachers", val)} />}
         </main>
       </div>
     </div>
@@ -820,47 +820,70 @@ function CalendarEditor({ data, onUpdate }: { data: CalendarEvent[], onUpdate: (
       <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl p-6">
          <h3 className="font-bold mb-4">Etkinlik Listesi</h3>
          <div className="space-y-3">
-            {data.map((item, idx) => (
-              <div key={item.id} className="flex items-center gap-4 bg-white/5 rounded-xl p-3 border border-white/5">
-                <div className="bg-white/10 px-3 py-1 rounded-lg text-xs font-mono">
-                  {item.day} / {item.month + 1} / {item.year}
+            {data.map((item, idx) => {
+              const dateVal = `${item.year}-${String(item.month + 1).padStart(2, "0")}-${String(item.day).padStart(2, "0")}`;
+              
+              return (
+                <div key={item.id} className="flex items-center gap-4 bg-white/5 rounded-xl p-3 border border-white/5">
+                  <input 
+                    type="date" 
+                    value={dateVal}
+                    onChange={(e) => {
+                      const [y, m, d] = e.target.value.split("-").map(Number);
+                      const newData = [...data];
+                      newData[idx] = {...item, year: y, month: m - 1, day: d};
+                      onUpdate(newData);
+                    }}
+                    className="bg-white/10 px-3 py-1.5 rounded-lg text-xs font-mono text-white border-none focus:ring-2 focus:ring-violet-500 transition-all outline-none"
+                  />
+                  <input 
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold" 
+                    value={item.label} 
+                    onChange={e => {
+                      const newData = [...data];
+                      newData[idx] = {...item, label: e.target.value};
+                      onUpdate(newData);
+                    }}
+                  />
+                  <select 
+                     className="bg-black/20 border-none rounded text-[10px] font-bold uppercase transition-all focus:ring-2 focus:ring-violet-500"
+                     value={item.color}
+                     onChange={e => {
+                       const newData = [...data];
+                       newData[idx] = {...item, color: e.target.value as any};
+                       onUpdate(newData);
+                     }}
+                  >
+                    <option value="rose">Kırmızı</option>
+                    <option value="amber">Turuncu</option>
+                    <option value="violet">Mor</option>
+                    <option value="cyan">Mavi</option>
+                  </select>
+                  <button onClick={() => onUpdate(data.filter(e => e.id !== item.id))} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all">
+                     <LucideIcons.Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <input 
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold" 
-                  value={item.label} 
-                  onChange={e => {
-                    const newData = [...data];
-                    newData[idx] = {...item, label: e.target.value};
-                    onUpdate(newData);
-                  }}
-                />
-                <select 
-                   className="bg-black/20 border-none rounded text-[10px] font-bold uppercase"
-                   value={item.color}
-                   onChange={e => {
-                     const newData = [...data];
-                     newData[idx] = {...item, color: e.target.value as any};
-                     onUpdate(newData);
-                   }}
-                >
-                  <option value="rose">Kırmızı</option>
-                  <option value="amber">Turuncu</option>
-                  <option value="violet">Mor</option>
-                  <option value="cyan">Mavi</option>
-                </select>
-                <button onClick={() => onUpdate(data.filter(e => e.id !== item.id))} className="text-rose-500">
-                   <LucideIcons.Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
          </div>
       </div>
       
       <button 
-        onClick={() => onUpdate([...data, { id: Date.now().toString(), day: 1, month: 2, year: 2026, label: "Yeni Etkinlik", color: "violet" }])}
-        className="w-full py-4 border-2 border-dashed border-white/10 rounded-2xl text-slate-500 font-black hover:text-white transition-all"
+        onClick={() => {
+          const today = new Date();
+          onUpdate([...data, { 
+            id: Date.now().toString(), 
+            day: today.getDate(), 
+            month: today.getMonth(), 
+            year: today.getFullYear(), 
+            label: "Yeni Etkinlik", 
+            color: "violet" 
+          }]);
+        }}
+        className="w-full py-4 border-2 border-dashed border-white/10 rounded-2xl text-slate-500 font-black hover:text-white hover:border-violet-500 focus:outline-none transition-all flex items-center justify-center gap-2"
       >
-        FEN BİLGİSİ ETKİNLİĞİ EKLE
+        <LucideIcons.Plus className="w-5 h-5" />
+        YENİ ETKİNLİK EKLE
       </button>
     </div>
   );

@@ -126,7 +126,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     if (saved) {
       try {
-        setDataState(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setDataState({ ...DEFAULT_DATA, ...parsed });
       } catch (e) {
         console.error("LocalStorage parse hatası:", e);
       }
