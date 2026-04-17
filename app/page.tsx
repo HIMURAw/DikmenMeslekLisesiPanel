@@ -106,14 +106,16 @@ function LessonStatusBadge({ status }: { status: LessonStatus }) {
 
 function AnnouncementTicker() {
   const { data } = useStore();
-  const announcements = data.announcements || [];
-  const events = (data.calendarEvents || []).map(e => ({
-    id: `ev-${e.id}`,
-    title: e.label,
-    desc: `${e.day} ${MONTHS[e.month]} ${e.year} tarihinde olacak`,
-    icon: "📅",
-    type: "Etkinlik" as const
-  }));
+  const announcements = (data.announcements || []).filter(a => a.visible !== false);
+  const events = (data.calendarEvents || [])
+    .filter(e => e.visible !== false)
+    .map(e => ({
+      id: `ev-${e.id}`,
+      title: e.label,
+      desc: `${e.day} ${MONTHS[e.month]} ${e.year} tarihinde olacak`,
+      icon: "📅",
+      type: "Etkinlik" as const
+    }));
 
   const allItems = [...announcements, ...events];
   const tickerItems = [...allItems, ...allItems];
@@ -153,7 +155,7 @@ function AnnouncementTicker() {
 
 function TeachersVerticalMarquee() {
   const { data } = useStore();
-  const teachers = data.teachers || [];
+  const teachers = (data.teachers || []).filter(t => t.visible !== false);
   const marqueeItems = [...teachers, ...teachers]; // Double for seamless -50% loop
 
   return (
@@ -266,7 +268,7 @@ export default function Dashboard() {
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-4 gap-4">
-          {data.stats.map(({ label, value, sub, iconName, gradient, shadowColor }) => {
+          {data.stats.filter(s => s.visible !== false).map(({ label, value, sub, iconName, gradient, shadowColor }) => {
             const Icon = getIcon(iconName);
             return (
               <div
@@ -319,8 +321,8 @@ export default function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.lessons.length > 0 ? (
-                    data.lessons.map((row) => (
+                  {data.lessons.filter(l => l.visible !== false).length > 0 ? (
+                    data.lessons.filter(l => l.visible !== false).map((row) => (
                       <TableRow
                         key={row.id}
                         className={`border-white/[0.04] transition-colors
@@ -393,7 +395,7 @@ export default function Dashboard() {
 
                   <div className="space-y-2">
                     {data.dutyOfficers
-                      .filter(o => o.date === todayStr)
+                      .filter(o => o.date === todayStr && o.visible !== false)
                       .map((o) => (
                         <div
                           key={o.id}
@@ -436,7 +438,7 @@ export default function Dashboard() {
 
                   <div className="space-y-2 opacity-60 grayscale-[0.5]">
                     {data.dutyOfficers
-                      .filter(o => o.date === tomorrowStr)
+                      .filter(o => o.date === tomorrowStr && o.visible !== false)
                       .map((o) => (
                         <div
                           key={o.id}

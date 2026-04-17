@@ -11,6 +11,7 @@ export interface Lesson {
   class: string;
   room: string;
   status: LessonStatus;
+  visible: boolean;
 }
 
 export interface Announcement {
@@ -20,6 +21,7 @@ export interface Announcement {
   type: "Önemli" | "Bilgi" | "Sınav" | "Etkinlik";
   icon: string;
   date: string;
+  visible: boolean;
 }
 
 export interface DutyOfficer {
@@ -28,6 +30,7 @@ export interface DutyOfficer {
   area: string;
   shift: string;
   active: boolean;
+  visible: boolean;
   date: string; // YYYY-MM-DD format
 }
 
@@ -39,6 +42,7 @@ export interface StatItem {
   iconName: string; // Dynamic icon name to be mapped
   gradient: string;
   shadowColor: string;
+  visible: boolean;
 }
 
 export interface CalendarEvent {
@@ -48,6 +52,7 @@ export interface CalendarEvent {
   year: number;
   label: string;
   color: "rose" | "amber" | "violet" | "cyan";
+  visible: boolean;
 }
 
 export interface Department {
@@ -55,12 +60,14 @@ export interface Department {
   name: string;
   description: string;
   iconName: string;
+  visible: boolean;
 }
 
 export interface Teacher {
   id: string;
   name: string;
   role: string;
+  visible: boolean;
 }
 
 export interface SchoolData {
@@ -71,6 +78,7 @@ export interface SchoolData {
   calendarEvents: CalendarEvent[];
   departments: Department[];
   teachers: Teacher[];
+  classes: string[];
   schoolName: string;
 }
 

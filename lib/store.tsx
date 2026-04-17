@@ -6,10 +6,10 @@ import { SchoolData } from "@/types/dashboard";
 const DEFAULT_DATA: SchoolData = {
   schoolName: "Dikmen Mesleki Teknik Anadolu Lisesi",
   stats: [
-    { id: "1", label: "Öğrenciler", value: "1.248", sub: "Toplam Kayıtlı", iconName: "Users", gradient: "from-violet-500 to-violet-700", shadowColor: "shadow-violet-500/20" },
-    { id: "2", label: "Öğretmenler", value: "88", sub: "Aktif Personel", iconName: "GraduationCap", gradient: "from-cyan-500 to-cyan-700", shadowColor: "shadow-cyan-500/20" },
-    { id: "3", label: "Sınıflar", value: "42", sub: "12 Şube · 6 Bölüm", iconName: "School", gradient: "from-amber-500 to-amber-700", shadowColor: "shadow-amber-500/20" },
-    { id: "4", label: "Aktif Duyurular", value: "7", sub: "2 Yeni Bugün", iconName: "Bell", gradient: "from-rose-500 to-rose-700", shadowColor: "shadow-rose-500/20" },
+    { id: "1", label: "Öğrenciler", value: "1.248", sub: "Toplam Kayıtlı", iconName: "Users", gradient: "from-violet-500 to-violet-700", shadowColor: "shadow-violet-500/20", visible: true },
+    { id: "2", label: "Öğretmenler", value: "88", sub: "Aktif Personel", iconName: "GraduationCap", gradient: "from-cyan-500 to-cyan-700", shadowColor: "shadow-cyan-500/20", visible: true },
+    { id: "3", label: "Sınıflar", value: "42", sub: "12 Şube · 6 Bölüm", iconName: "School", gradient: "from-amber-500 to-amber-700", shadowColor: "shadow-amber-500/20", visible: true },
+    { id: "4", label: "Aktif Duyurular", value: "7", sub: "2 Yeni Bugün", iconName: "Bell", gradient: "from-rose-500 to-rose-700", shadowColor: "shadow-rose-500/20", visible: true },
   ],
   lessons: [],
   announcements: [],
@@ -106,6 +106,7 @@ const DEFAULT_DATA: SchoolData = {
     { id: "t87", name: "Büşra KARAKÜLLEOĞLU", role: "Din Kültürü ve Ahlâk Bilgisi Öğretmeni" },
     { id: "t88", name: "Rukiye CANKURT", role: "Din Kültürü ve Ahlâk Bilgisi Öğretmeni" },
   ],
+  classes: ["9-A", "9-B", "10-A", "10-B", "11-A", "11-B", "12-A", "12-B"],
 };
 
 interface StoreContextType {
