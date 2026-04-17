@@ -80,5 +80,5 @@ export interface SchoolData {
   teachers: Teacher[];
   classes: string[];
   schoolName: string;
+  logo?: string;
 }
-

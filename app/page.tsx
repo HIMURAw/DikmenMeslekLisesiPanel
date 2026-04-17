@@ -32,8 +32,6 @@ const DAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
 function TimeDisplay() {
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -102,8 +100,6 @@ function LessonStatusBadge({ status }: { status: LessonStatus }) {
   );
 }
 
-
-
 function AnnouncementTicker() {
   const { data } = useStore();
   const announcements = (data.announcements || []).filter(a => a.visible !== false);
@@ -166,7 +162,7 @@ function TeachersVerticalMarquee() {
           <div className="w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/20 flex items-center justify-center">
             <LucideIcons.GraduationCap className="w-4 h-4 text-violet-400" />
           </div>
-          <h2 className="text-[15px] font-bold text-white">Öğretmenlerimiz</h2>
+          <h2 className="text-[15px] font-bold text-white">Öğretmenler</h2>
         </div>
         <span className="px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-bold text-violet-400 uppercase tracking-widest">
           {teachers.length} Personel
@@ -241,8 +237,12 @@ export default function Dashboard() {
           {/* Logo & School Name */}
           <div className="flex items-center gap-6">
             <div className="relative shrink-0">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-800 flex items-center justify-center shadow-2xl shadow-violet-600/40 border border-white/10">
-                <LucideIcons.School className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-800 flex items-center justify-center shadow-2xl shadow-violet-600/40 border border-white/10 overflow-hidden">
+                {data.logo ? (
+                  <img src={data.logo} alt="School Logo" className="w-full h-full object-contain p-1.5" />
+                ) : (
+                  <LucideIcons.School className="w-6 h-6 text-white" />
+                )}
               </div>
             </div>
             <div>
@@ -268,26 +268,54 @@ export default function Dashboard() {
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-4 gap-4">
-          {data.stats.filter(s => s.visible !== false).map(({ label, value, sub, iconName, gradient, shadowColor }) => {
-            const Icon = getIcon(iconName);
-            return (
-              <div
-                key={label}
-                className={`group relative rounded-2xl bg-[#0c1829] border border-white/[0.06] p-5 shadow-xl ${shadowColor} flex items-center gap-4 overflow-hidden hover:border-white/[0.10] transition-colors`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-[0.04] pointer-events-none`} />
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg shrink-0`}>
-                  <Icon className="w-7 h-7 text-white" />
+          {data.stats
+            .filter(s => s.visible !== false)
+            .map((stat) => {
+              let displayValue = stat.value;
+              let displaySub = stat.sub;
+              let shouldHide = false;
+
+              // Dinamik Değerler
+              if (stat.label === "Öğretmenler") {
+                const count = (data.teachers || []).filter(t => t.visible !== false).length;
+                displayValue = count.toString();
+                displaySub = `${count} Aktif Personel`;
+                if (count === 0) shouldHide = true;
+              } else if (stat.label === "Sınıflar") {
+                const count = (data.classes || []).length;
+                displayValue = count.toString();
+                displaySub = `${count} Şube Mevcut`;
+                if (count === 0) shouldHide = true;
+              } else if (stat.label === "Aktif Duyurular") {
+                const visibleAnnouncements = (data.announcements || []).filter(a => a.visible !== false).length;
+                const visibleEvents = (data.calendarEvents || []).filter(e => e.visible !== false).length;
+                const total = visibleAnnouncements + visibleEvents;
+                displayValue = total.toString();
+                displaySub = `${visibleAnnouncements} Duyuru · ${visibleEvents} Etkinlik`;
+                if (total === 0) shouldHide = true;
+              }
+
+              if (shouldHide) return null;
+
+              const Icon = getIcon(stat.iconName);
+              return (
+                <div
+                  key={stat.id}
+                  className={`group relative rounded-2xl bg-[#0c1829] border border-white/[0.06] p-5 shadow-xl ${stat.shadowColor} flex items-center gap-4 overflow-hidden hover:border-white/[0.10] transition-colors`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-[0.04] pointer-events-none`} />
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-lg shrink-0`}>
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-3xl font-black text-white leading-none tabular-nums">{displayValue}</p>
+                    <p className="text-[13px] font-semibold text-white/80 mt-0.5">{stat.label}</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5 truncate">{displaySub}</p>
+                  </div>
+                  <LucideIcons.TrendingUp className="w-4 h-4 text-emerald-400 shrink-0 self-start opacity-70" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-3xl font-black text-white leading-none tabular-nums">{value}</p>
-                  <p className="text-[13px] font-semibold text-white/80 mt-0.5">{label}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">{sub}</p>
-                </div>
-                <LucideIcons.TrendingUp className="w-4 h-4 text-emerald-400 shrink-0 self-start opacity-70" />
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         {/* ── Main Grid (Fills remaining space) ── */}
@@ -477,11 +505,6 @@ export default function Dashboard() {
 
       </div>
 
-
-
-
-
     </div>
   );
 }
-
