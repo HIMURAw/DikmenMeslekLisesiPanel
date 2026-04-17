@@ -57,6 +57,12 @@ export interface Department {
   iconName: string;
 }
 
+export interface Teacher {
+  id: string;
+  name: string;
+  role: string;
+}
+
 export interface SchoolData {
   stats: StatItem[];
   lessons: Lesson[];
@@ -64,5 +70,7 @@ export interface SchoolData {
   dutyOfficers: DutyOfficer[];
   calendarEvents: CalendarEvent[];
   departments: Department[];
+  teachers: Teacher[];
   schoolName: string;
 }
+

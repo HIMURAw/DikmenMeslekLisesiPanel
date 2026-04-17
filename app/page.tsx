@@ -263,6 +263,53 @@ function AnnouncementsCarousel() {
   );
 }
 
+
+
+function TeachersCarousel() {
+  const { data } = useStore();
+  const carouselItems = [...data.teachers, ...data.teachers];
+
+  return (
+    <div className="rounded-2xl bg-[#0c1829] border border-white/[0.06] shadow-2xl overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/20 flex items-center justify-center">
+          <LucideIcons.GraduationCap className="w-4 h-4 text-violet-400" />
+        </div>
+        <h2 className="text-[15px] font-bold text-white">Öğretmen Kadromuz</h2>
+        <span className="w-5 h-5 rounded-full bg-violet-500 text-[10px] font-black text-white flex items-center justify-center">
+          {data.teachers.length}
+        </span>
+      </div>
+
+      {/* Carousel */}
+      <div className="relative overflow-hidden py-4">
+        <div className="pointer-events-none absolute left-0 inset-y-0 w-16 bg-gradient-to-r from-[#0c1829] to-transparent z-10" />
+        <div className="pointer-events-none absolute right-0 inset-y-0 w-16 bg-gradient-to-l from-[#0c1829] to-transparent z-10" />
+        <div
+          className="flex gap-4 px-5 animate-announcement-carousel hover:[animation-play-state:paused]"
+          style={{ width: "max-content" }}
+        >
+          {carouselItems.map((t, i) => (
+            <div
+              key={i}
+              className="w-64 shrink-0 p-4 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center gap-4 hover:bg-white/[0.05] transition-colors"
+            >
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500/20 to-violet-800/20 text-violet-400 flex items-center justify-center font-black text-lg border border-violet-500/10">
+                {t.name[0]}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold text-white leading-tight truncate">{t.name}</p>
+                <p className="text-[11px] text-slate-500 mt-1 truncate">{t.role}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -553,6 +600,9 @@ export default function Dashboard() {
              )
            })}
         </div>
+
+        {/* ── Teachers Carousel (Added) ── */}
+        <TeachersCarousel />
 
         {/* ── Announcements Carousel ── */}
         <AnnouncementsCarousel />

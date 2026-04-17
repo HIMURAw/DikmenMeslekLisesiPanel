@@ -10,6 +10,7 @@ import {
   StatItem, 
   CalendarEvent, 
   Department,
+  Teacher,
   LessonStatus
 } from "@/types/dashboard";
 
@@ -101,6 +102,7 @@ export default function AdminPage() {
     { id: "duty", label: "Nöbetçiler", icon: LucideIcons.ShieldCheck },
     { id: "calendar", label: "Etkinlik Takvimi", icon: LucideIcons.CalendarDays },
     { id: "departments", label: "Bölümlerimiz", icon: LucideIcons.LayoutGrid },
+    { id: "teachers", label: "Öğretmenler", icon: LucideIcons.GraduationCap },
   ];
 
   return (
@@ -214,6 +216,10 @@ export default function AdminPage() {
                         <span className="text-xs text-slate-400">Dersler</span>
                         <span className="text-xs font-black text-white">{data.lessons.length}</span>
                       </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400">Öğretmenler</span>
+                        <span className="text-xs font-black text-white">{data.teachers.length}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -274,6 +280,7 @@ export default function AdminPage() {
           {activeTab === "duty" && <DutyEditor data={data.dutyOfficers} onUpdate={(val) => updateData("dutyOfficers", val)} />}
           {activeTab === "departments" && <DepartmentsEditor data={data.departments} onUpdate={(val) => updateData("departments", val)} />}
           {activeTab === "calendar" && <CalendarEditor data={data.calendarEvents} onUpdate={(val) => updateData("calendarEvents", val)} />}
+          {activeTab === "teachers" && <TeachersEditor data={data.teachers} onUpdate={(val) => updateData("teachers", val)} />}
         </main>
       </div>
     </div>
@@ -855,6 +862,138 @@ function CalendarEditor({ data, onUpdate }: { data: CalendarEvent[], onUpdate: (
       >
         FEN BİLGİSİ ETKİNLİĞİ EKLE
       </button>
+    </div>
+  );
+}
+
+function TeachersEditor({ data, onUpdate }: { data: Teacher[], onUpdate: (data: Teacher[]) => void }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [newItem, setNewItem] = useState({ name: "", role: "" });
+
+  const filtered = data.filter(t => 
+    t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    t.role.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const addItem = () => {
+    if (newItem.name && newItem.role) {
+      onUpdate([{ ...newItem, id: Date.now().toString() }, ...data]);
+      setNewItem({ name: "", role: "" });
+    }
+  };
+
+  const removeItem = (id: string) => {
+    onUpdate(data.filter(t => t.id !== id));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Search and Add */}
+      <div className="grid grid-cols-3 gap-6">
+        <div className="col-span-2 bg-[#0c1829] border border-white/[0.06] rounded-2xl p-6">
+          <h3 className="font-bold mb-4 flex items-center gap-2">
+            <LucideIcons.Search className="w-4 h-4 text-violet-500" />
+            Öğretmen Ara
+          </h3>
+          <input 
+            placeholder="İsim veya branş ile ara..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500 transition-all"
+          />
+        </div>
+        <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl p-6">
+          <h3 className="font-bold mb-4 flex items-center gap-2">
+            <LucideIcons.UserPlus className="w-4 h-4 text-emerald-500" />
+            Yeni Ekle
+          </h3>
+          <div className="space-y-3">
+            <input 
+              placeholder="Ad Soyad" 
+              value={newItem.name}
+              onChange={e => setNewItem({...newItem, name: e.target.value})}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500"
+            />
+            <input 
+              placeholder="Görevi / Branşı" 
+              value={newItem.role}
+              onChange={e => setNewItem({...newItem, role: e.target.value})}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500"
+            />
+            <button 
+              onClick={addItem}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 py-2 rounded-lg font-bold text-xs transition-all"
+            >
+              Kaydet
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* List */}
+      <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl overflow-hidden">
+        <div className="max-h-[600px] overflow-y-auto scrollbar-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-white/5 border-b border-white/10 sticky top-0 z-10">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase">Öğretmen Bilgisi</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase">Görevi</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase text-right">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.06]">
+              {filtered.map((item, idx) => (
+                <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-violet-600/20 text-violet-400 flex items-center justify-center font-bold text-xs">
+                        {item.name[0]}
+                      </div>
+                      <input 
+                        className="bg-transparent border-none focus:ring-0 font-bold text-sm w-full p-0" 
+                        value={item.name} 
+                        onChange={e => {
+                          const newData = [...data];
+                          const realIdx = data.findIndex(t => t.id === item.id);
+                          newData[realIdx] = {...item, name: e.target.value};
+                          onUpdate(newData);
+                        }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <input 
+                      className="bg-transparent border-none focus:ring-0 text-slate-400 text-sm w-full p-0" 
+                      value={item.role} 
+                      onChange={e => {
+                        const newData = [...data];
+                        const realIdx = data.findIndex(t => t.id === item.id);
+                        newData[realIdx] = {...item, role: e.target.value};
+                        onUpdate(newData);
+                      }}
+                    />
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => removeItem(item.id)}
+                      className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <LucideIcons.Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-6 py-12 text-center text-slate-600 text-sm">
+                    Aranan kriterlere uygun öğretmen bulunamadı.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
