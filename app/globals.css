@@ -83,37 +83,33 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  /* ── Deep Midnight + Neon Theme ── */
+  --background: oklch(0.08 0.02 250);          /* Deeper midnight bg */
+  --foreground: oklch(0.98 0.01 250);          /* Crisp white text */
+  --card: oklch(0.12 0.03 250);                /* Card bg with slightly more blue */
+  --card-foreground: oklch(0.95 0.01 250);
+  --popover: oklch(0.12 0.03 250);
+  --popover-foreground: oklch(0.95 0.01 250);
+  --primary: oklch(0.65 0.25 285);             /* Vibrant neon violet */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.18 0.04 250);           /* Muted navy secondary */
+  --secondary-foreground: oklch(0.90 0.02 250);
+  --muted: oklch(0.18 0.04 250);
+  --muted-foreground: oklch(0.60 0.02 250);    /* Slate grey */
+  --accent: oklch(0.70 0.20 285);              /* Lighter violet accent */
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.60 0.22 25);          /* Vivid rose */
+  --border: oklch(1 0 0 / 12%);                /* Subtle borders */
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ring: oklch(0.65 0.25 285 / 50%);
+  --sidebar: oklch(0.10 0.03 250);
+  --sidebar-foreground: oklch(0.95 0.01 250);
+  --sidebar-primary: oklch(0.65 0.25 285);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.16 0.04 250);
+  --sidebar-accent-foreground: oklch(0.90 0.02 250);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.65 0.25 285 / 50%);
 }
 
 @layer base {
@@ -126,9 +122,50 @@
   html {
     @apply font-sans;
   }
+
+  /* ── Dark Scrollbar ── */
+  .dark * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--primary), 0.2) transparent;
+  }
+  .dark *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .dark *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .dark *::-webkit-scrollbar-thumb {
+    background: oklch(0.65 0.25 285 / 20%);
+    border-radius: 999px;
+  }
+  .dark *::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.65 0.25 285 / 40%);
+  }
+
+  /* ── Input Focus Glow ── */
+  .dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="submit"]):focus,
+  .dark select:focus,
+  .dark textarea:focus {
+    box-shadow: 0 0 0 2px oklch(0.65 0.25 285 / 30%), 0 0 20px oklch(0.65 0.25 285 / 10%);
+    border-color: oklch(0.65 0.25 285 / 50%);
+  }
+
+  /* ── Select dropdown option bg ── */
+  .dark select option {
+    background-color: oklch(0.12 0.03 250);
+    color: oklch(0.95 0.01 250);
+  }
+
+  /* ── Time input calendar icon colour ── */
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.6) sepia(1) saturate(2) hue-rotate(220deg);
+  }
 }
 
-/* ── Dashboard Animations ── */
+/* ══════════════════════════════════════
+   Keyframes
+══════════════════════════════════════ */
 @keyframes ticker-scroll {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -144,6 +181,29 @@
   100% { transform: translateY(-50%); }
 }
 
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes glow-pulse-anim {
+  0%, 100% { opacity: 0.45; transform: scale(1);    }
+  50%       { opacity: 0.85; transform: scale(1.06); }
+}
+
+@keyframes ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════
+   Existing Utilities
+══════════════════════════════════════ */
 @utility animate-ticker {
   animation: ticker-scroll 45s linear infinite;
 }
@@ -162,4 +222,66 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* ══════════════════════════════════════
+   New Utility Classes
+══════════════════════════════════════ */
+@utility bg-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@utility bg-grid-sm {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+@utility glow-violet {
+  box-shadow: 0 0 32px rgba(124, 58, 237, 0.45), 0 0 10px rgba(124, 58, 237, 0.2);
+}
+
+@utility glow-cyan {
+  box-shadow: 0 0 32px rgba(6, 182, 212, 0.45), 0 0 10px rgba(6, 182, 212, 0.2);
+}
+
+@utility glow-emerald {
+  box-shadow: 0 0 32px rgba(16, 185, 129, 0.45), 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+@utility glow-amber {
+  box-shadow: 0 0 32px rgba(245, 158, 11, 0.45), 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+@utility glow-rose {
+  box-shadow: 0 0 32px rgba(244, 63, 94, 0.45), 0 0 10px rgba(244, 63, 94, 0.2);
+}
+
+@utility glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@utility animate-glow-pulse {
+  animation: glow-pulse-anim 5s ease-in-out infinite;
+}
+
+@utility animate-ring-spin {
+  animation: ring-spin 3s linear infinite;
+}
+
+@utility animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.5s linear infinite;
+}
+
+@utility animate-fade-up {
+  animation: fade-up 0.5s ease-out both;
 }

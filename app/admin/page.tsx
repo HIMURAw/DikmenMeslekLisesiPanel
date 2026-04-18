@@ -32,38 +32,66 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#07101e] flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-[#0c1829] border border-white/[0.06] rounded-3xl p-8 shadow-2xl">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-800 flex items-center justify-center shadow-xl mb-4">
-            <LucideIcons.ShieldCheck className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-black text-white">Yönetim Paneli</h1>
-          <p className="text-slate-500 text-sm mt-1">Lütfen devam etmek için şifreyi girin</p>
-        </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="absolute -top-48 -left-48 w-[520px] h-[520px] rounded-full bg-primary/[0.10] blur-3xl pointer-events-none animate-glow-pulse" />
+      <div className="absolute -bottom-40 -right-40 w-[400px] h-[400px] rounded-full bg-accent/[0.07] blur-3xl pointer-events-none animate-glow-pulse" style={{ animationDelay: "2s" }} />
+      <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Şifre</label>
-            <div className="relative">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`w-full bg-white/[0.03] border ${error ? 'border-rose-500' : 'border-white/[0.08]'} rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 transition-all`}
-                placeholder="••••••••"
-                autoFocus
-              />
-              {error && <LucideIcons.AlertCircle className="absolute right-3 top-3.5 w-5 h-5 text-rose-500 animate-bounce" />}
+      <div className="w-full max-w-md relative z-10">
+        {/* Outer glow halo */}
+        <div className="absolute -inset-4 bg-gradient-to-b from-primary/15 to-transparent blur-2xl rounded-3xl pointer-events-none" />
+        <div className="relative bg-card border border-primary/20 rounded-3xl p-8 shadow-[0_0_60px_rgba(var(--primary),0.15)] overflow-hidden">
+          {/* Top gradient line */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent rounded-t-3xl" />
+
+          <div className="flex flex-col items-center mb-8">
+            <div className="relative mb-6">
+              <div className="absolute -inset-4 rounded-full bg-primary/20 blur-xl animate-pulse" />
+              <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl shadow-primary/40">
+                <LucideIcons.Lock className="w-10 h-10 text-primary-foreground" />
+              </div>
             </div>
+            <h1 className="text-2xl font-black text-foreground tracking-tighter uppercase">Yönetici Paneli</h1>
+            <p className="text-muted-foreground text-[10px] mt-2 uppercase tracking-[0.3em] font-black opacity-60 text-center px-4">
+              Yetkili erişimi için kimlik doğrulaması gereklidir
+            </p>
           </div>
-          <button
-            type="submit"
-            className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-violet-600/20 transition-all active:scale-[0.98]"
-          >
-            Giriş Yap
-          </button>
-        </form>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1 opacity-70">Giriş Şifresi</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`w-full bg-foreground/[0.03] border ${error ? "border-destructive shadow-[0_0_0_2px_rgba(var(--destructive),0.2)]" : "border-border"} rounded-2xl px-5 py-4 text-foreground placeholder-muted-foreground/40 focus:outline-none focus:border-primary transition-all font-mono`}
+                  placeholder="••••••••"
+                  autoFocus
+                />
+                {error && <LucideIcons.AlertCircle className="absolute right-4 top-4 w-5 h-5 text-destructive animate-bounce" />}
+              </div>
+              {error && (
+                <p className="text-destructive text-[11px] font-black ml-1 flex items-center gap-2 uppercase tracking-widest animate-fade-up">
+                  <LucideIcons.XCircle className="w-4 h-4" /> Geçersiz Şifre
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-primary to-accent hover:scale-[1.02] active:scale-[0.98] text-primary-foreground font-black uppercase py-4 rounded-2xl shadow-xl shadow-primary/30 transition-all tracking-widest text-xs"
+            >
+              Paneli Başlat
+            </button>
+          </form>
+          
+          <div className="mt-8 pt-6 border-t border-border flex justify-center">
+            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-[0.3em] opacity-30">
+              Dikmen MTAL Bilgi Sistemi © 2026
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -130,7 +158,7 @@ export default function AdminPage() {
             vpChanged = true;
           }
           if (updatedVPs[vpIndex].visible !== t.visible) {
-            updatedVPs[vpIndex].visible = t.visible;
+            updatedVPs[vpIndex].visible = t.visible ?? true;
             vpChanged = true;
           }
           if (vpChanged) vpsChanged = true;
@@ -179,7 +207,7 @@ export default function AdminPage() {
           tChanged = true;
         }
         if (updatedTeachers[teacherIndex].visible !== vp.visible) {
-          updatedTeachers[teacherIndex].visible = vp.visible;
+          updatedTeachers[teacherIndex].visible = vp.visible ?? true;
           tChanged = true;
         }
         if (tChanged) teachersChanged = true;
@@ -221,62 +249,85 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#07101e] text-white flex">
+    <div className="min-h-screen bg-background text-foreground flex font-sans">
       {/* Sidebar */}
-      <div className="w-72 bg-[#0c1829] border-r border-white/[0.06] flex flex-col">
-        <div className="p-6 border-b border-white/[0.06]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center">
-              <LucideIcons.School className="w-6 h-6" />
+      <div className="w-72 bg-card border-r border-border flex flex-col relative z-20">
+        {/* Top gradient accent line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent z-10" />
+        {/* Ambient glow */}
+        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-primary/[0.05] to-transparent pointer-events-none" />
+
+        <div className="relative p-8 border-b border-border">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute -inset-2 rounded-xl bg-primary/20 blur-md animate-pulse" />
+              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+                <LucideIcons.School className="w-6 h-6 text-primary-foreground" />
+              </div>
             </div>
             <div>
-              <h2 className="font-black text-sm leading-none">Dikmen MTAL</h2>
-              <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">Admin Paneli</p>
+              <h2 className="font-black text-base leading-none text-foreground tracking-tighter">Dikmen MTAL</h2>
+              <p className="text-[9px] text-primary mt-1.5 uppercase tracking-widest font-black opacity-80">Kontrol Merkezi</p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="relative flex-1 p-5 space-y-1.5 overflow-y-auto scrollbar-hidden">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === tab.id
-                ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20"
-                : "text-slate-400 hover:bg-white/5 hover:text-white"
-                }`}
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 text-left group ${
+                activeTab === tab.id
+                  ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-xl shadow-primary/25 border border-primary/20"
+                  : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground border border-transparent"
+              }`}
             >
-              <tab.icon className="w-5 h-5" />
-              <span className="text-sm font-bold">{tab.label}</span>
+              <tab.icon className={`w-5 h-5 shrink-0 transition-transform duration-300 ${activeTab === tab.id ? "scale-110" : "group-hover:scale-110"}`} />
+              <span className="text-xs font-black leading-tight tracking-tight">{tab.label}</span>
+              {activeTab === tab.id && (
+                <LucideIcons.ChevronRight className="w-4 h-4 ml-auto text-primary-foreground/50 shrink-0" />
+              )}
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/[0.06]">
+        <div className="relative p-5 border-t border-border bg-foreground/[0.02]">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all font-bold text-sm"
+            className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-destructive hover:bg-destructive/10 hover:border-destructive/20 border border-transparent transition-all font-black text-xs uppercase tracking-widest"
           >
             <LucideIcons.LogOut className="w-5 h-5" />
-            Çıkış Yap
+            Sistemi Kapat
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-8">
-        <header className="flex items-center justify-between mb-8">
+      <div className="flex-1 overflow-y-auto p-10 relative bg-background/50">
+        {/* Subtle top gradient */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+
+        <header className="relative flex items-center justify-between mb-12 animate-fade-up">
           <div>
-            <h1 className="text-3xl font-black text-white">{tabs.find(t => t.id === activeTab)?.label}</h1>
-            <p className="text-slate-500 text-sm mt-1">Okul verilerini buradan güncelleyebilirsiniz.</p>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-1.5 h-10 rounded-full bg-gradient-to-b from-primary to-accent shadow-[0_0_12px_rgba(var(--primary),0.5)]" />
+              <h1 className="text-3xl font-black text-foreground tracking-tighter uppercase">{tabs.find(t => t.id === activeTab)?.label}</h1>
+            </div>
+            <p className="text-muted-foreground text-xs font-medium ml-5 opacity-60">Okul yönetim sistemine hoş geldiniz. Değişiklikler anında panoya yansır.</p>
           </div>
-          <a href="/" target="_blank" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-bold hover:bg-white/10 transition-all">
-            <LucideIcons.ExternalLink className="w-4 h-4" />
-            Siteyi Görüntüle
+          <a
+            href="/"
+            target="_blank"
+            className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-foreground/5 border border-border text-xs font-black uppercase tracking-widest hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all group"
+          >
+            <LucideIcons.Monitor className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            Canlı Panoyu Aç
           </a>
         </header>
 
-        <main className="space-y-6">
+        <main className="relative z-10 animate-fade-up" style={{ animationDelay: "100ms" }}>
           {activeTab === "general" && (
             <GeneralEditor 
               schoolName={data.schoolName} 
@@ -296,7 +347,7 @@ export default function AdminPage() {
           {activeTab === "stats" && <StatsEditor data={data.stats || []} onUpdate={(val) => updateData("stats", val)} />}
           {activeTab === "announcements" && <AnnouncementsEditor data={data.announcements || []} onUpdate={(val) => updateData("announcements", val)} />}
           {activeTab === "lessons" && (
-            <div className="space-y-8">
+            <div className="space-y-10">
               <LessonsEditor 
                 data={data.lessons || []} 
                 onUpdate={(val) => updateData("lessons", val)} 
@@ -354,16 +405,19 @@ function GeneralEditor({
   };
 
   return (
-    <div className="bg-[#0c1829] border border-white/[0.06] rounded-3xl p-8 max-w-2xl shadow-2xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/10 blur-[100px] -mr-32 -mt-32" />
-      <h3 className="text-lg font-black mb-6 flex items-center gap-2 relative z-10">
-        <LucideIcons.Settings className="w-5 h-5 text-violet-500" />
+    <div className="bg-card border border-border rounded-3xl p-8 max-w-2xl shadow-2xl relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] -mr-32 -mt-32" />
+      <h3 className="text-base font-black mb-6 flex items-center gap-3 relative z-10">
+        <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center">
+          <LucideIcons.Settings className="w-4 h-4 text-primary" />
+        </div>
         Okul Ayarları
       </h3>
       <div className="space-y-6 relative z-10">
         <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-white/5 border border-dashed border-white/10">
           <div className="relative group">
-            <div className="w-24 h-24 rounded-2xl bg-[#07101e] border border-white/10 flex items-center justify-center overflow-hidden shadow-2xl transition-transform group-hover:scale-105">
+            <div className="w-24 h-24 rounded-2xl bg-background border border-white/10 flex items-center justify-center overflow-hidden shadow-2xl transition-transform group-hover:scale-105">
               {logo ? (
                 <img src={logo} alt="Logo" className="w-full h-full object-contain p-2" />
               ) : (
@@ -373,23 +427,23 @@ function GeneralEditor({
             {logo && (
               <button 
                 onClick={() => onUpdateLogo("")}
-                className="absolute -top-2 -right-2 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-rose-400 transition-colors"
+                className="absolute -top-2 -right-2 w-7 h-7 bg-destructive text-white rounded-full flex items-center justify-center shadow-lg hover:bg-destructive/80 transition-colors"
               >
                 <LucideIcons.X className="w-4 h-4" />
               </button>
             )}
           </div>
           <div className="text-center">
-              <label className="cursor-pointer bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all">
+              <label className="cursor-pointer bg-primary hover:bg-primary/80 text-primary-foreground px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
               Logo Yükle
               <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
             </label>
-            <p className="text-[10px] text-slate-500 mt-2">Önerilen: 200x200 PNG/JPG (Maks 1MB)</p>
+            <p className="text-[9px] text-muted-foreground mt-2">Önerilen: 200x200 PNG/JPG (Maks 1MB)</p>
           </div>
         </div>
 
-        <div className="space-y-4 pt-4 border-t border-white/5">
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Anasayfa Bölüm Kontrolleri</label>
+        <div className="space-y-4 pt-4 border-t border-border">
+          <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-70">Anasayfa Bölüm Kontrolleri</label>
           {/* 
           <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 group transition-all hover:border-violet-500/30">
             <div className="flex items-center gap-3">
@@ -412,22 +466,22 @@ function GeneralEditor({
 
           {/* Atatürk Photos Slideshow Management */}
           {ataturkVisible && (
-            <div className="space-y-4 pt-4 border-t border-white/5">
+            <div className="space-y-4 pt-4 border-t border-border">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Atatürk Köşesi Slayt Yönetimi</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-70">Atatürk Köşesi Slayt Yönetimi</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-600 font-bold">Geçiş:</span>
+                  <span className="text-[9px] text-muted-foreground font-bold">Geçiş:</span>
                   <input 
                     type="number" 
-                    className="w-16 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none" 
+                    className="w-16 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-white outline-none" 
                     value={ataturkInterval} 
                     onChange={e => onUpdateAtaturkInterval(Number(e.target.value))}
                     min={5}
                   />
-                  <span className="text-[10px] text-slate-600 font-bold underline">sn</span>
+                  <span className="text-[9px] text-muted-foreground font-bold underline">sn</span>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-4 gap-3">
                 {ataturkImages.map((img, idx) => (
                   <div key={idx} className="relative group/img aspect-square rounded-xl overflow-hidden border border-white/10 bg-white/5">
@@ -451,21 +505,21 @@ function GeneralEditor({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Okul Adı</label>
+          <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-70">Okul Adı</label>
           <input
             value={schoolName}
             onChange={e => onUpdateName(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:border-violet-500 transition-all outline-none"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:border-primary transition-all outline-none text-sm"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Footer (Alt Bilgi) Metni</label>
+          <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-70">Footer (Alt Bilgi) Metni</label>
           <textarea
             value={footerText}
             onChange={e => onUpdateFooter(e.target.value)}
             rows={2}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:border-violet-500 transition-all outline-none text-sm"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:border-primary transition-all outline-none text-xs"
             placeholder="Ekranın en altında kayacak metni yazın..."
           />
         </div>
@@ -489,7 +543,7 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
         const isDynamic = ["Öğretmenler", "Sınıflar", "Aktif Duyurular"].includes(item.label);
 
         return (
-          <div key={item.id} className={`bg-[#0c1829] border border-white/[0.06] rounded-3xl p-6 space-y-5 shadow-xl relative overflow-hidden group transition-all ${!item.visible ? 'opacity-40 grayscale' : ''}`}>
+          <div key={item.id} className={`bg-card border border-border rounded-3xl p-6 space-y-5 shadow-xl relative overflow-hidden group transition-all ${!item.visible ? 'opacity-40 grayscale' : ''}`}>
             <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-[0.02] pointer-events-none`} />
 
             <div className="flex items-center justify-between gap-4 relative z-10">
@@ -499,7 +553,7 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
                 </div>
                 <div className="flex-1">
                   <input
-                    className={`bg-transparent font-black text-xl text-white border-none focus:ring-0 p-0 w-full ${isDynamic ? 'cursor-not-allowed opacity-50' : ''}`}
+                    className={`bg-transparent font-black text-lg text-white border-none focus:ring-0 p-0 w-full ${isDynamic ? 'cursor-not-allowed opacity-50' : ''}`}
                     value={item.label}
                     readOnly={isDynamic}
                     onChange={e => {
@@ -508,7 +562,7 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
                       onUpdate(newData);
                     }}
                   />
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">İstatistik Başlığı</p>
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5 opacity-60">İstatistik Başlığı</p>
                 </div>
               </div>
               <button
@@ -517,7 +571,7 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
                   newData[idx] = { ...item, visible: item.visible === false ? true : false };
                   onUpdate(newData);
                 }}
-                className={`p-2 rounded-xl transition-all ${item.visible !== false ? 'text-violet-400 bg-violet-400/10' : 'text-slate-600 bg-white/5'}`}
+                className={`p-2 rounded-xl transition-all ${item.visible !== false ? 'text-primary bg-primary/10' : 'text-muted-foreground bg-white/5'}`}
               >
                 {item.visible !== false ? <LucideIcons.Eye className="w-5 h-5" /> : <LucideIcons.EyeOff className="w-5 h-5" />}
               </button>
@@ -525,12 +579,12 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
 
             <div className="grid grid-cols-2 gap-4 relative z-10">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Değer</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Değer</label>
                 <input
                   type="text"
                   value={item.value}
                   readOnly={isDynamic}
-                  className={`w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-2.5 text-white font-black text-lg focus:outline-none focus:border-violet-500 transition-all ${isDynamic ? 'cursor-not-allowed opacity-30 select-none' : ''}`}
+                  className={`w-full bg-foreground/[0.03] border border-border rounded-xl px-4 py-2.5 text-white font-black text-base focus:outline-none focus:border-primary transition-all ${isDynamic ? 'cursor-not-allowed opacity-30 select-none' : ''}`}
                   onChange={(e) => {
                     if (isDynamic) return;
                     const newData = [...data];
@@ -540,7 +594,7 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Alt Bilgi</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Alt Bilgi</label>
                 <input
                   type="text"
                   value={item.sub}
@@ -549,21 +603,21 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
                     newData[idx] = { ...item, sub: e.target.value };
                     onUpdate(newData);
                   }}
-                  className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500 transition-all font-bold"
+                  className="w-full bg-foreground/[0.03] border border-border rounded-xl px-4 py-2.5 text-white text-xs focus:outline-none focus:border-primary transition-all font-bold"
                 />
               </div>
             </div>
 
             {isDynamic && (
-              <div className="relative z-10 flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 mt-2 font-bold text-amber-500 text-[10px] uppercase tracking-widest">
+              <div className="relative z-10 flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 mt-2 font-bold text-amber-500 text-[9px] uppercase tracking-widest">
                 <LucideIcons.Lock className="w-3.5 h-3.5" />
                 Dinamik Değer: Bu değer değiştirilemez.
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 relative z-10">
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border relative z-10">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">İkon (Lucide)</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">İkon (Lucide)</label>
                 <input
                   type="text"
                   value={item.iconName}
@@ -572,12 +626,12 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
                     newData[idx] = { ...item, iconName: e.target.value };
                     onUpdate(newData);
                   }}
-                  className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-400 focus:outline-none focus:border-violet-500 font-mono"
+                  className="w-full bg-foreground/[0.03] border border-border rounded-xl px-3 py-2 text-[10px] text-muted-foreground focus:outline-none focus:border-primary font-mono"
                   placeholder="örn: Users, Bell..."
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Renk Teması</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Renk Teması</label>
                 <select
                   value={item.gradient}
                   onChange={(e) => {
@@ -588,7 +642,7 @@ function StatsEditor({ data, onUpdate }: { data: StatItem[], onUpdate: (data: St
                       onUpdate(newData);
                     }
                   }}
-                  className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-400 focus:outline-none focus:border-violet-500"
+                  className="w-full bg-foreground/[0.03] border border-border rounded-xl px-3 py-2 text-[10px] text-muted-foreground focus:outline-none focus:border-primary"
                 >
                   {gradients.map(g => (
                     <option key={g.value} value={g.value}>{g.label}</option>
@@ -621,14 +675,14 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between p-6 bg-[#0c1829] border border-white/[0.06] rounded-2xl shadow-xl">
+      <div className="flex items-center justify-between p-6 bg-card border border-border rounded-2xl shadow-xl">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
             <LucideIcons.BookOpen className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-white">Ders Programı Görünürlüğü</h3>
-            <p className="text-xs text-slate-500">Bu ayar kapalıyken ders programı ana sayfada gizlenir.</p>
+            <h3 className="text-base font-black text-white">Ders Programı Görünürlüğü</h3>
+            <p className="text-[11px] text-muted-foreground opacity-60">Bu ayar kapalıyken ders programı ana sayfada gizlenir.</p>
           </div>
         </div>
         <button 
@@ -642,32 +696,32 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
         </button>
       </div>
 
-      <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl overflow-hidden shadow-2xl">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-2xl">
         <table className="w-full text-left">
-          <thead className="bg-white/5 border-b border-white/10">
+          <thead className="bg-foreground/[0.03] border-b border-border">
             <tr>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Saat</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Ders</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Öğretmen</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Sınıf</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Durum / İşlem</th>
+              <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Saat</th>
+              <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Ders</th>
+              <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Öğretmen</th>
+              <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Sınıf</th>
+              <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60 text-right">Durum / İşlem</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.04]">
+          <tbody className="divide-y divide-border">
             {data.map((item, idx) => (
-              <tr key={item.id} className={`hover:bg-white/[0.02] transition-colors group ${!item.visible ? 'opacity-40 grayscale' : ''}`}>
+              <tr key={item.id} className={`hover:bg-foreground/[0.01] transition-colors group ${!item.visible ? 'opacity-40 grayscale' : ''}`}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col gap-1">
-                    <input type="time" className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white" value={item.time} onChange={e => {
+                    <input type="time" className="bg-foreground/[0.03] border border-border rounded-lg px-2 py-1 text-[10px] text-white" value={item.time} onChange={e => {
                       const newData = [...data]; newData[idx] = { ...item, time: e.target.value }; onUpdate(newData);
                     }} />
-                    <input type="time" className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-400" value={item.end} onChange={e => {
+                    <input type="time" className="bg-foreground/[0.03] border border-border rounded-lg px-2 py-1 text-[10px] text-muted-foreground" value={item.end} onChange={e => {
                       const newData = [...data]; newData[idx] = { ...item, end: e.target.value }; onUpdate(newData);
                     }} />
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none" value={item.lesson} onChange={e => {
+                  <select className="w-full bg-foreground/[0.03] border border-border rounded-xl px-4 py-2 text-xs font-bold text-white outline-none" value={item.lesson} onChange={e => {
                     const newData = [...data]; newData[idx] = { ...item, lesson: e.target.value }; onUpdate(newData);
                   }}>
                     <option value="">Ders Seçin...</option>
@@ -675,7 +729,7 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
                   </select>
                 </td>
                 <td className="px-6 py-4">
-                  <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none" value={item.teacher} onChange={e => {
+                  <select className="w-full bg-foreground/[0.03] border border-border rounded-xl px-4 py-2 text-xs text-muted-foreground outline-none" value={item.teacher} onChange={e => {
                     const newData = [...data]; newData[idx] = { ...item, teacher: e.target.value }; onUpdate(newData);
                   }}>
                     <option value="">Öğretmen Seçin...</option>
@@ -683,7 +737,7 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
                   </select>
                 </td>
                 <td className="px-6 py-4">
-                  <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none" value={item.class} onChange={e => {
+                  <select className="w-full bg-foreground/[0.03] border border-border rounded-xl px-4 py-2 text-xs text-muted-foreground outline-none" value={item.class} onChange={e => {
                     const newData = [...data]; newData[idx] = { ...item, class: e.target.value }; onUpdate(newData);
                   }}>
                     <option value="">Sınıf Seçin...</option>
@@ -694,10 +748,10 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
                   <div className="flex items-center justify-end gap-2">
                     <button onClick={() => {
                       const newData = [...data]; newData[idx] = { ...item, visible: item.visible === false ? true : false }; onUpdate(newData);
-                    }} className={`p-2 rounded-lg transition-all ${item.visible !== false ? 'text-violet-400 bg-violet-400/10' : 'text-slate-600 bg-white/5'}`}>
+                    }} className={`p-2 rounded-lg transition-all ${item.visible !== false ? 'text-primary bg-primary/10' : 'text-muted-foreground bg-white/5'}`}>
                       {item.visible !== false ? <LucideIcons.Eye className="w-4 h-4" /> : <LucideIcons.EyeOff className="w-4 h-4" />}
                     </button>
-                    <button onClick={() => onUpdate(data.filter(li => li.id !== item.id))} className="p-2 text-rose-500/30 hover:text-rose-500 transition-all">
+                    <button onClick={() => onUpdate(data.filter(li => li.id !== item.id))} className="p-2 text-destructive/30 hover:text-destructive transition-all">
                       <LucideIcons.Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -706,8 +760,8 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
             ))}
           </tbody>
         </table>
-        <div className="p-4 bg-white/5 border-t border-white/10 flex justify-center">
-          <button onClick={() => onUpdate([...data, { id: Date.now().toString(), time: "08:15", end: "08:55", lesson: "", teacher: "", class: "", room: "Derslik", status: "upcoming", visible: true }])} className="px-8 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg">
+        <div className="p-4 bg-foreground/[0.02] border-t border-border flex justify-center">
+        <button onClick={() => onUpdate([...data, { id: Date.now().toString(), time: "08:15", end: "08:55", lesson: "", teacher: "", class: "", room: "Derslik", status: "upcoming", visible: true }])} className="px-8 py-3 bg-gradient-to-r from-primary to-accent hover:scale-[1.02] active:scale-[0.98] text-primary-foreground rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-primary/25">
             + Yeni Ders Satırı Ekle
           </button>
         </div>
@@ -909,7 +963,7 @@ function DutyEditor({ data, onUpdate }: { data: DutyOfficer[], onUpdate: (data: 
             {selectedDate !== today && <button onClick={() => setSelectedDate(today)} className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-all">Bugüne Dön</button>}
           </div>
         </div>
-        <button onClick={() => onUpdate([...data, { id: Date.now().toString(), name: "Yeni Nöbetçi", area: "Görev Yeri", shift: "08:00-16:00", active: true, visible: true, date: selectedDate }])} className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase transition-all shadow-lg flex items-center gap-2">
+        <button onClick={() => onUpdate([...data, { id: Date.now().toString(), name: "Yeni Nöbetçi", area: "Görev Yeri", shift: "08:00-16:00", active: true, visible: true, date: selectedDate }])} className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white rounded-2xl font-black text-xs uppercase transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/40 flex items-center gap-2">
           <LucideIcons.UserPlus className="w-4 h-4" /> Nöbetçi Ekle
         </button>
       </div>
@@ -961,13 +1015,21 @@ function AnnouncementsEditor({ data, onUpdate }: { data: Announcement[], onUpdat
 
   return (
     <div className="space-y-6">
-      <div className="bg-[#0c1829] border border-white/[0.06] rounded-3xl p-8 space-y-6 shadow-2xl">
-        <h3 className="text-xl font-black text-white flex items-center gap-2"><LucideIcons.Megaphone className="w-6 h-6 text-violet-500" /> Yeni Duyuru Ekle</h3>
+      <div className="bg-[#0c1829] border border-white/[0.06] rounded-3xl p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+        <h3 className="text-xl font-black text-white flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center">
+            <LucideIcons.Megaphone className="w-5 h-5 text-violet-400" />
+          </div>
+          Yeni Duyuru Ekle
+        </h3>
         <div className="grid grid-cols-2 gap-4">
           <input placeholder="Duyuru Başlığı" className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none font-bold" value={newItem.title} onChange={e => setNewItem({ ...newItem, title: e.target.value })} />
           <select className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none" value={newItem.type} onChange={e => setNewItem({ ...newItem, type: e.target.value as any })}><option value="Bilgi">Bilgi</option><option value="Önemli">Önemli</option><option value="Sınav">Sınav</option><option value="Etkinlik">Etkinlik</option></select>
           <textarea placeholder="Duyuru Detayı..." className="col-span-2 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none h-32" value={newItem.desc} onChange={e => setNewItem({ ...newItem, desc: e.target.value })} />
-          <button onClick={addItem} className="col-span-2 bg-violet-600 hover:bg-violet-500 text-white font-black uppercase py-4 rounded-2xl shadow-lg transition-all">Duyuruyu Yayınla</button>
+          <button onClick={addItem} className="col-span-2 bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 text-white font-black uppercase py-4 rounded-2xl shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40 hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                <LucideIcons.Send className="w-4 h-4" /> Duyuruyu Yayınla
+              </button>
         </div>
       </div>
       <div className="space-y-4">
@@ -1010,17 +1072,27 @@ function DepartmentsEditor({ data, onUpdate }: { data: Department[], onUpdate: (
           </div>
         </div>
       ))}
-      <button onClick={() => onUpdate([...data, { id: Date.now().toString(), name: "Yeni Bölüm", description: "Bölüm açıklaması...", iconName: "Layout", visible: true }])} className="w-full py-6 border-2 border-dashed border-white/10 rounded-[2rem] text-slate-500 font-black hover:text-white hover:border-violet-500/50 transition-all uppercase tracking-widest text-sm">+ YENİ BÖLÜM EKLE</button>
+      <button onClick={() => onUpdate([...data, { id: Date.now().toString(), name: "Yeni Bölüm", description: "Bölüm açıklaması...", iconName: "Layout", visible: true }])} className="w-full py-6 border-2 border-dashed border-white/10 rounded-[2rem] text-slate-500 font-black hover:text-violet-400 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+        <LucideIcons.Plus className="w-5 h-5" /> YENİ BÖLÜM EKLE
+      </button>
     </div>
   );
 }
 
 function CalendarEditor({ data, onUpdate }: { data: CalendarEvent[], onUpdate: (data: CalendarEvent[]) => void }) {
   return (
-    <div className="bg-[#0c1829] border border-white/[0.06] rounded-3xl p-8 space-y-6">
+    <div className="bg-[#0c1829] border border-white/[0.06] rounded-3xl p-8 space-y-6 relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-black text-white flex items-center gap-2"><LucideIcons.CalendarDays className="w-6 h-6 text-violet-500" /> Yıllık Etkinlikler</h3>
-        <button onClick={() => { const today = new Date(); onUpdate([...data, { id: Date.now().toString(), day: today.getDate(), month: today.getMonth(), year: today.getFullYear(), label: "Yeni Etkinlik", color: "violet", visible: true }]); }} className="bg-violet-600 hover:bg-violet-500 text-white px-6 py-2 rounded-xl font-bold text-xs uppercase transition-all">Yeni Ekle</button>
+        <h3 className="text-xl font-black text-white flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center">
+            <LucideIcons.CalendarDays className="w-5 h-5 text-violet-400" />
+          </div>
+          Yıllık Etkinlikler
+        </h3>
+        <button onClick={() => { const today = new Date(); onUpdate([...data, { id: Date.now().toString(), day: today.getDate(), month: today.getMonth(), year: today.getFullYear(), label: "Yeni Etkinlik", color: "violet", visible: true }]); }} className="bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 text-white px-6 py-2 rounded-xl font-bold text-xs uppercase transition-all shadow-lg shadow-violet-600/20 flex items-center gap-2">
+            <LucideIcons.Plus className="w-3.5 h-3.5" /> Yeni Ekle
+          </button>
       </div>
       <div className="space-y-3">
         {data.map((item, idx) => {

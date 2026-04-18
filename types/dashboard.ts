@@ -71,12 +71,15 @@ export type LessonStatus = "active" | "upcoming" | "finished";
 export interface VicePrincipal {
   id: string;
   name: string;
+  visible?: boolean;
   availability: {
     monday: boolean;
     tuesday: boolean;
     wednesday: boolean;
     thursday: boolean;
     friday: boolean;
+    saturday: boolean;
+    sunday: boolean;
   };
 }
 
