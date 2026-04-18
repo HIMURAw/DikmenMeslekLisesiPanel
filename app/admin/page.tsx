@@ -11,7 +11,8 @@ import {
   CalendarEvent,
   Department,
   Teacher,
-  LessonStatus
+  LessonStatus,
+  VicePrincipal
 } from "@/types/dashboard";
 
 // ─── Login Component ──────────────────────────────────────────────────────────
@@ -81,9 +82,109 @@ export default function AdminPage() {
     if (session === "true") setIsLoggedIn(true);
   }, []);
 
+  // Migration: If vicePrincipals is empty, populate from teachers
+  useEffect(() => {
+    if (!isLoading && isLoggedIn && (!data.vicePrincipals || data.vicePrincipals.length === 0)) {
+      const vpsFromTeachers = (data.teachers || [])
+        .filter(t => t.role === "Müdür Yardımcısı")
+        .map(t => ({
+          id: t.id,
+          name: t.name,
+          availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true }
+        }));
+      
+      if (vpsFromTeachers.length > 0) {
+        updateData("vicePrincipals", vpsFromTeachers);
+      }
+    }
+  }, [isLoading, isLoggedIn, data.teachers, data.vicePrincipals, updateData]);
+
   const handleLogin = () => {
     setIsLoggedIn(true);
     sessionStorage.setItem("admin_session", "true");
+  };
+
+  const syncTeachersWithVPs = (newTeachers: Teacher[]) => {
+    updateData("teachers", newTeachers);
+    
+    // Sync to vicePrincipals
+    const currentVPs = [...(data.vicePrincipals || [])];
+    let vpsChanged = false;
+
+    // Remove VPs that are no longer teachers or don't have the role anymore
+    const updatedVPs = currentVPs.filter(vp => {
+      const teacher = newTeachers.find(t => t.id === vp.id);
+      return teacher && teacher.role === "Müdür Yardımcısı";
+    });
+
+    if (updatedVPs.length !== currentVPs.length) vpsChanged = true;
+
+    // Update names of existing VPs and add new ones
+    newTeachers.forEach(t => {
+      if (t.role === "Müdür Yardımcısı") {
+        const vpIndex = updatedVPs.findIndex(vp => vp.id === t.id);
+        if (vpIndex !== -1) {
+          if (updatedVPs[vpIndex].name !== t.name) {
+            updatedVPs[vpIndex].name = t.name;
+            vpsChanged = true;
+          }
+        } else {
+          // Add new VP
+          updatedVPs.push({
+            id: t.id,
+            name: t.name,
+            availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true }
+          });
+          vpsChanged = true;
+        }
+      }
+    });
+
+    if (vpsChanged) {
+      updateData("vicePrincipals", updatedVPs);
+    }
+  };
+
+  const syncVPsWithTeachers = (newVPs: VicePrincipal[]) => {
+    updateData("vicePrincipals", newVPs);
+
+    // Sync to teachers
+    const currentTeachers = [...(data.teachers || [])];
+    let teachersChanged = false;
+
+    // Remove teachers that were VPs and are now gone from VPs list
+    const updatedTeachers = currentTeachers.filter(t => {
+      if (t.role === "Müdür Yardımcısı") {
+        return newVPs.some(vp => vp.id === t.id);
+      }
+      return true;
+    });
+
+    if (updatedTeachers.length !== currentTeachers.length) teachersChanged = true;
+
+    // Update names of existing teachers and add new ones
+    newVPs.forEach(vp => {
+      const teacherIndex = updatedTeachers.findIndex(t => t.id === vp.id);
+      if (teacherIndex !== -1) {
+        if (updatedTeachers[teacherIndex].name !== vp.name) {
+          updatedTeachers[teacherIndex].name = vp.name;
+          teachersChanged = true;
+        }
+      } else {
+        // Add new teacher as VP
+        updatedTeachers.push({
+          id: vp.id,
+          name: vp.name,
+          role: "Müdür Yardımcısı",
+          visible: true
+        });
+        teachersChanged = true;
+      }
+    });
+
+    if (teachersChanged) {
+      updateData("teachers", updatedTeachers);
+    }
   };
 
   const handleLogout = () => {
@@ -194,7 +295,7 @@ export default function AdminPage() {
               <VicePrincipalsEditor 
                 data={data.vicePrincipals || []} 
                 visible={data.vicePrincipalsVisible}
-                onUpdate={(val) => updateData("vicePrincipals", val)} 
+                onUpdate={syncVPsWithTeachers} 
                 onUpdateVisible={(val) => {
                   updateData("vicePrincipalsVisible", val);
                   if (val) updateData("lessonsVisible", false);
@@ -206,7 +307,7 @@ export default function AdminPage() {
           {activeTab === "duty" && <DutyEditor data={data.dutyOfficers || []} onUpdate={(val) => updateData("dutyOfficers", val)} />}
           {activeTab === "departments" && <DepartmentsEditor data={data.departments || []} onUpdate={(val) => updateData("departments", val)} />}
           {activeTab === "calendar" && <CalendarEditor data={data.calendarEvents || []} onUpdate={(val) => updateData("calendarEvents", val)} />}
-          {activeTab === "teachers" && <TeachersEditor data={data.teachers || []} onUpdate={(val) => updateData("teachers", val)} />}
+          {activeTab === "teachers" && <TeachersEditor data={data.teachers || []} onUpdate={syncTeachersWithVPs} />}
         </main>
       </div>
     </div>
@@ -595,6 +696,135 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
         <div className="p-4 bg-white/5 border-t border-white/10 flex justify-center">
           <button onClick={() => onUpdate([...data, { id: Date.now().toString(), time: "08:15", end: "08:55", lesson: "", teacher: "", class: "", room: "Derslik", status: "upcoming", visible: true }])} className="px-8 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg">
             + Yeni Ders Satırı Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VicePrincipalsEditor({ data, visible, onUpdate, onUpdateVisible }: { 
+  data: VicePrincipal[], 
+  visible: boolean,
+  onUpdate: (data: VicePrincipal[]) => void, 
+  onUpdateVisible: (val: boolean) => void 
+}) {
+  const days = [
+    { key: "monday", label: "Pazartesi" },
+    { key: "tuesday", label: "Salı" },
+    { key: "wednesday", label: "Çarşamba" },
+    { key: "thursday", label: "Perşembe" },
+    { key: "friday", label: "Cuma" }
+  ];
+
+  const addVP = () => {
+    const newVP: VicePrincipal = {
+      id: Date.now().toString(),
+      name: "",
+      availability: {
+        monday: true, tuesday: true, wednesday: true, thursday: true, friday: true
+      }
+    };
+    onUpdate([...data, newVP]);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between p-6 bg-[#0c1829] border border-white/[0.06] rounded-2xl shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-500">
+            <LucideIcons.Users className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-white">Müdür Yardımcıları Görünürlüğü</h3>
+            <p className="text-xs text-slate-500">Açık olduğunda "Müsait Müdür Yardımcıları" listesi ana sayfada gösterilir.</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => onUpdateVisible(!visible)}
+          className={`w-14 h-7 rounded-full relative transition-all ${visible ? 'bg-violet-600' : 'bg-slate-800'}`}
+        >
+          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${visible ? 'left-8' : 'left-1'}`} />
+        </button>
+      </div>
+
+      <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl overflow-hidden shadow-2xl">
+        <div className="p-6 border-b border-white/5 bg-white/[0.02]">
+          <h4 className="text-sm font-black text-white uppercase tracking-widest">Müdür Yardımcıları Listesi</h4>
+        </div>
+        
+        <div className="divide-y divide-white/[0.04]">
+          {data.map((vp, idx) => (
+            <div key={vp.id} className="p-6 hover:bg-white/[0.01] transition-all">
+              <div className="flex items-center gap-6 mb-4">
+                <div className="flex-1">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1 block">Ad Soyad</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-bold outline-none focus:border-violet-500 transition-all"
+                    value={vp.name}
+                    onChange={e => {
+                      const newData = [...data];
+                      newData[idx] = { ...vp, name: e.target.value };
+                      onUpdate(newData);
+                    }}
+                    placeholder="Müdür Yardımcısı Adı..."
+                  />
+                </div>
+                <button 
+                  onClick={() => onUpdate(data.filter(v => v.id !== vp.id))}
+                  className="mt-5 p-2.5 text-rose-500/30 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                >
+                  <LucideIcons.Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-5 gap-2">
+                {days.map(day => (
+                  <button
+                    key={day.key}
+                    onClick={() => {
+                      const newData = [...data];
+                      newData[idx] = { 
+                        ...vp, 
+                        availability: { 
+                          ...vp.availability, 
+                          [day.key]: !vp.availability[day.key as keyof typeof vp.availability] 
+                        } 
+                      };
+                      onUpdate(newData);
+                    }}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
+                      vp.availability[day.key as keyof typeof vp.availability] 
+                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                        : 'bg-white/5 border-white/10 text-slate-600'
+                    }`}
+                  >
+                    <span className="text-[9px] font-black uppercase tracking-tighter">{day.label}</span>
+                    {vp.availability[day.key as keyof typeof vp.availability] ? (
+                      <LucideIcons.CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                      <LucideIcons.XCircle className="w-4 h-4 opacity-50" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          
+          {data.length === 0 && (
+            <div className="py-12 text-center">
+              <LucideIcons.Users className="w-12 h-12 text-slate-800 mx-auto mb-3" />
+              <p className="text-slate-500 text-sm font-medium">Henüz müdür yardımcısı eklenmemiş.</p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 bg-white/5 border-t border-white/10 flex justify-center">
+          <button 
+            onClick={addVP}
+            className="px-8 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg"
+          >
+            + Müdür Yardımcısı Ekle
           </button>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import * as LucideIcons from "lucide-react";
-import { type Teacher, type LessonStatus } from "@/types/dashboard";
+import { type Teacher, type LessonStatus, type VicePrincipal } from "@/types/dashboard";
 
 const Footer = ({ text }: { text: string }) => {
   return (
@@ -312,6 +312,12 @@ function TeachersVerticalMarquee() {
 
 export default function Dashboard() {
   const { data, isLoading } = useStore();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (isLoading) {
     return (
@@ -441,52 +447,118 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Bugünkü Dersler */}
-          {data.lessonsVisible !== false && (
+          {/* Bugünkü Dersler / Müdür Yardımcıları Slotu */}
+          {(data.lessonsVisible !== false || data.vicePrincipalsVisible) && (
             <div className={`col-span-3 h-full rounded-2xl bg-[#0c1829] border border-white/[0.06] shadow-xl overflow-hidden flex flex-col`}>
-              <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center">
-                    <LucideIcons.BookOpen className="w-4 h-4 text-cyan-400" />
-                  </div>
-                  <h2 className="text-[15px] font-bold text-white uppercase tracking-wider">Bugün</h2>
-                </div>
-              </div>
-              <div className="overflow-y-auto scrollbar-hidden flex-1">
-                <div className="p-4 space-y-3">
-                  {data.lessons.filter(l => l.visible !== false).length > 0 ? (
-                    data.lessons.filter(l => l.visible !== false).map((row) => (
-                      <div
-                        key={row.id}
-                        className={`p-4 rounded-xl border transition-all ${row.status === "active"
-                          ? "bg-emerald-500/10 border-emerald-500/20"
-                          : "bg-white/[0.02] border-white/[0.05]"
-                          }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono text-slate-500">{row.time} – {row.end}</span>
-                          <LessonStatusBadge status={row.status} />
-                        </div>
-                        <h3 className="text-base font-black text-white leading-tight mb-1">{row.lesson}</h3>
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-slate-400 font-bold uppercase tracking-widest">{row.teacher}</span>
-                          <span className="text-cyan-400 font-black">{row.class}</span>
+              {(() => {
+                const hour = currentTime.getHours();
+                const minutes = currentTime.getMinutes();
+                const isBreakTime = hour === 13 && minutes >= 0 && minutes <= 40;
+
+                if (isBreakTime) {
+                  return (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-b from-amber-500/5 to-transparent">
+                      <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 animate-pulse">
+                        <LucideIcons.Coffee className="w-8 h-8 text-amber-500" />
+                      </div>
+                      <h3 className="text-xl font-black text-amber-500 uppercase tracking-tighter mb-2">Mola Zamanı</h3>
+                      <p className="text-sm font-bold text-slate-300 leading-relaxed px-4">
+                        Öğretmenlerimiz 13.00-13.40 arası olmamaktadır.
+                      </p>
+                    </div>
+                  );
+                }
+
+                if (data.vicePrincipalsVisible) {
+                  const dayNames: { [key: number]: keyof VicePrincipal["availability"] } = {
+                    1: "monday", 2: "tuesday", 3: "wednesday", 4: "thursday", 5: "friday"
+                  };
+                  const todayKey = dayNames[currentTime.getDay()];
+                  const visibleVPs = todayKey ? (data.vicePrincipals || []).filter(vp => vp.availability[todayKey]) : [];
+
+                  return (
+                    <>
+                      <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between shrink-0 bg-white/[0.02]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/20 flex items-center justify-center">
+                            <LucideIcons.Users className="w-4 h-4 text-violet-400" />
+                          </div>
+                          <h2 className="text-[14px] font-bold text-white uppercase tracking-wider">Müsait Müdür Yrd.</h2>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full opacity-10 gap-2 py-20">
-                      <LucideIcons.CalendarOff className="w-12 h-12" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-center">Plan Yok</p>
+                      <div className="overflow-y-auto scrollbar-hidden flex-1 p-4 space-y-3">
+                        {visibleVPs.length > 0 ? (
+                          visibleVPs.map((vp) => (
+                            <div key={vp.id} className="p-4 rounded-xl bg-white/[0.03] border border-white/5 flex items-center gap-4 hover:bg-white/[0.05] transition-all">
+                              <div className="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
+                                <LucideIcons.UserCheck className="w-5 h-5 text-violet-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-white truncate leading-none">{vp.name}</p>
+                                <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  Şu An Müsait
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-center opacity-30 py-10">
+                            <LucideIcons.UserX className="w-10 h-10 mb-2" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">Müsait Kimse Yok</p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                }
+
+                return (
+                  <>
+                    <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between shrink-0 bg-white/[0.02]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center">
+                          <LucideIcons.BookOpen className="w-4 h-4 text-cyan-400" />
+                        </div>
+                        <h2 className="text-[15px] font-bold text-white uppercase tracking-wider">Bugün</h2>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                    <div className="overflow-y-auto scrollbar-hidden flex-1 p-4 space-y-3">
+                      {data.lessons.filter(l => l.visible !== false).length > 0 ? (
+                        data.lessons.filter(l => l.visible !== false).map((row) => (
+                          <div
+                            key={row.id}
+                            className={`p-4 rounded-xl border transition-all ${row.status === "active"
+                              ? "bg-emerald-500/10 border-emerald-500/20 shadow-lg shadow-emerald-500/5"
+                              : "bg-white/[0.02] border-white/[0.05]"
+                              }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] font-mono text-slate-500 tabular-nums">{row.time} – {row.end}</span>
+                              <LessonStatusBadge status={row.status} />
+                            </div>
+                            <h3 className="text-sm font-black text-white leading-tight mb-1">{row.lesson}</h3>
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-slate-400 font-bold uppercase tracking-widest truncate max-w-[120px]">{row.teacher}</span>
+                              <span className="text-cyan-400 font-black shrink-0">{row.class}</span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full opacity-10 gap-2 py-20">
+                          <LucideIcons.CalendarOff className="w-12 h-12" />
+                          <p className="text-[10px] font-black uppercase tracking-widest text-center">Plan Yok</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
 
           {/* Right column — Dinamik Genişleme */}
-          <div className={`${(data.ataturkCornerVisible === false && data.lessonsVisible === false) ? 'col-span-12' : (data.ataturkCornerVisible === false || data.lessonsVisible === false) ? 'col-span-9' : 'col-span-6'} flex flex-col gap-5 h-full`}>
+          <div className={`${(data.ataturkCornerVisible === false && data.lessonsVisible === false && !data.vicePrincipalsVisible) ? 'col-span-12' : (data.ataturkCornerVisible === false || (data.lessonsVisible === false && !data.vicePrincipalsVisible)) ? 'col-span-9' : 'col-span-6'} flex flex-col gap-5 h-full`}>
 
             {/* Nöbetçiler */}
             <div className="rounded-2xl bg-[#0c1829] border border-white/[0.06] shadow-xl p-6">

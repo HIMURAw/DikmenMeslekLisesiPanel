@@ -131,18 +131,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem("dikmen_mtal_data");
-
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setDataState({ ...DEFAULT_DATA, ...parsed });
-      } catch (e) {
-        console.error("LocalStorage parse hatası:", e);
+    const loadFromLocal = () => {
+      const saved = localStorage.getItem("dikmen_mtal_data");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setDataState({ ...DEFAULT_DATA, ...parsed });
+        } catch (e) {
+          console.error("LocalStorage load error:", e);
+        }
       }
-    }
+    };
 
+    // Initial load
+    loadFromLocal();
+
+    // Listen for changes from other tabs (Admin)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "dikmen_mtal_data") {
+        loadFromLocal();
+      }
+    };
+
+    // Fallback: 1-minute refresh as requested
+    const interval = setInterval(loadFromLocal, 60000);
+
+    window.addEventListener("storage", handleStorageChange);
     setIsLoading(false);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
