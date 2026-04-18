@@ -90,7 +90,7 @@ export default function AdminPage() {
         .map(t => ({
           id: t.id,
           name: t.name,
-          availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true }
+          availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: false, sunday: false }
         }));
       
       if (vpsFromTeachers.length > 0) {
@@ -124,16 +124,23 @@ export default function AdminPage() {
       if (t.role === "Müdür Yardımcısı") {
         const vpIndex = updatedVPs.findIndex(vp => vp.id === t.id);
         if (vpIndex !== -1) {
+          let vpChanged = false;
           if (updatedVPs[vpIndex].name !== t.name) {
             updatedVPs[vpIndex].name = t.name;
-            vpsChanged = true;
+            vpChanged = true;
           }
+          if (updatedVPs[vpIndex].visible !== t.visible) {
+            updatedVPs[vpIndex].visible = t.visible;
+            vpChanged = true;
+          }
+          if (vpChanged) vpsChanged = true;
         } else {
           // Add new VP
           updatedVPs.push({
             id: t.id,
             name: t.name,
-            availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true }
+            visible: t.visible !== false,
+            availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: false, sunday: false }
           });
           vpsChanged = true;
         }
@@ -166,17 +173,23 @@ export default function AdminPage() {
     newVPs.forEach(vp => {
       const teacherIndex = updatedTeachers.findIndex(t => t.id === vp.id);
       if (teacherIndex !== -1) {
+        let tChanged = false;
         if (updatedTeachers[teacherIndex].name !== vp.name) {
           updatedTeachers[teacherIndex].name = vp.name;
-          teachersChanged = true;
+          tChanged = true;
         }
+        if (updatedTeachers[teacherIndex].visible !== vp.visible) {
+          updatedTeachers[teacherIndex].visible = vp.visible;
+          tChanged = true;
+        }
+        if (tChanged) teachersChanged = true;
       } else {
         // Add new teacher as VP
         updatedTeachers.push({
           id: vp.id,
           name: vp.name,
           role: "Müdür Yardımcısı",
-          visible: true
+          visible: vp.visible !== false
         });
         teachersChanged = true;
       }
@@ -714,15 +727,18 @@ function VicePrincipalsEditor({ data, visible, onUpdate, onUpdateVisible }: {
     { key: "tuesday", label: "Salı" },
     { key: "wednesday", label: "Çarşamba" },
     { key: "thursday", label: "Perşembe" },
-    { key: "friday", label: "Cuma" }
+    { key: "friday", label: "Cuma" },
+    { key: "saturday", label: "Cumartesi" },
+    { key: "sunday", label: "Pazar" }
   ];
 
   const addVP = () => {
     const newVP: VicePrincipal = {
       id: Date.now().toString(),
       name: "",
+      visible: true,
       availability: {
-        monday: true, tuesday: true, wednesday: true, thursday: true, friday: true
+        monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: false, sunday: false
       }
     };
     onUpdate([...data, newVP]);
@@ -756,7 +772,7 @@ function VicePrincipalsEditor({ data, visible, onUpdate, onUpdateVisible }: {
         <div className="divide-y divide-white/[0.04]">
           {data.map((vp, idx) => (
             <div key={vp.id} className="p-6 hover:bg-white/[0.01] transition-all">
-              <div className="flex items-center gap-6 mb-4">
+              <div className="flex items-center gap-4 mb-4">
                 <div className="flex-1">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1 block">Ad Soyad</label>
                   <input 
@@ -770,12 +786,21 @@ function VicePrincipalsEditor({ data, visible, onUpdate, onUpdateVisible }: {
                     placeholder="Müdür Yardımcısı Adı..."
                   />
                 </div>
-                <button 
-                  onClick={() => onUpdate(data.filter(v => v.id !== vp.id))}
-                  className="mt-5 p-2.5 text-rose-500/30 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
-                >
-                  <LucideIcons.Trash2 className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2 mt-5">
+                  <button onClick={() => {
+                    const newData = [...data];
+                    newData[idx] = { ...vp, visible: vp.visible === false ? true : false };
+                    onUpdate(newData);
+                  }} className={`p-2.5 rounded-xl transition-all ${vp.visible !== false ? 'text-violet-400 bg-violet-400/10' : 'text-slate-600 bg-white/5'}`}>
+                    {vp.visible !== false ? <LucideIcons.Eye className="w-5 h-5" /> : <LucideIcons.EyeOff className="w-5 h-5" />}
+                  </button>
+                  <button 
+                    onClick={() => onUpdate(data.filter(v => v.id !== vp.id))}
+                    className="p-2.5 text-rose-500/30 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                  >
+                    <LucideIcons.Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-5 gap-2">
