@@ -1,36 +1,6 @@
-"use client";
+const { MongoClient } = require('mongodb');
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
-import { SchoolData } from "@/types/dashboard";
-
-const DEFAULT_DATA: SchoolData = {
-  schoolName: "Okul Adı...",
-  stats: [
-    { id: "1", label: "Öğrenciler", value: "0", sub: "Yükleniyor...", iconName: "Users", gradient: "from-violet-500 to-violet-700", shadowColor: "shadow-violet-500/20", visible: true },
-    { id: "2", label: "Öğretmenler", value: "0", sub: "Yükleniyor...", iconName: "GraduationCap", gradient: "from-cyan-500 to-cyan-700", shadowColor: "shadow-cyan-500/20", visible: true },
-    { id: "3", label: "Sınıflar", value: "0", sub: "Yükleniyor...", iconName: "School", gradient: "from-amber-500 to-amber-700", shadowColor: "shadow-amber-500/20", visible: true },
-    { id: "4", label: "Aktif Duyurular", value: "0", sub: "Yükleniyor...", iconName: "Bell", gradient: "from-rose-500 to-rose-700", shadowColor: "shadow-rose-500/20", visible: true },
-  ],
-  lessons: [],
-  announcements: [],
-  dutyOfficers: [],
-  calendarEvents: [],
-  departments: [],
-  teachers: [],
-  classes: [],
-  logo: "",
-  lessonsVisible: true,
-  vicePrincipalsVisible: false,
-  ataturkCornerVisible: true,
-  footerText: "Alt bilgi buraya gelecek...",
-  ataturkImages: [],
-  ataturkInterval: 300,
-  ataturkQuotes: [],
-  vicePrincipals: []
-};
-
-// Original hardcoded data for initial seed if DB is empty
-const SEED_DATA: SchoolData = {
+const SEED_DATA = {
   schoolName: "Dikmen Mesleki Teknik Anadolu Lisesi",
   stats: [
     { id: "1", label: "Öğrenciler", value: "1.248", sub: "Toplam Kayıtlı", iconName: "Users", gradient: "from-violet-500 to-violet-700", shadowColor: "shadow-violet-500/20", visible: true },
@@ -152,98 +122,21 @@ const SEED_DATA: SchoolData = {
   vicePrincipals: []
 };
 
-interface StoreContextType {
-  data: SchoolData;
-  setData: (data: SchoolData) => void;
-  updateData: <K extends keyof SchoolData>(key: K, value: SchoolData[K]) => void;
-  isLoading: boolean;
-}
+async function seed() {
+  const uri = "mongodb+srv://dikmenmtal:sGh2ktUY59kpPyvO@cluster0.mqmpsdo.mongodb.net/?appName=Cluster0";
+  const client = new MongoClient(uri);
 
-const StoreContext = createContext<StoreContextType | null>(null);
-
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const [data, setDataState] = useState<SchoolData>(DEFAULT_DATA);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const syncToBackend = useCallback(async (newData: SchoolData) => {
-    try {
-      await fetch("/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newData),
-      });
-    } catch (e) {
-      console.error("Sync error:", e);
-    }
-  }, []);
-
-  const fetchFromBackend = useCallback(async () => {
-    try {
-      const res = await fetch("/api/data");
-      if (res.ok) {
-        const result = await res.json();
-        setDataState(result);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      console.error("Fetch error:", e);
-      return false;
-    }
-  }, []);
-
-  useEffect(() => {
-    const init = async () => {
-      setIsLoading(true);
-      const hasData = await fetchFromBackend();
-      
-      if (!hasData) {
-        // First run: Seed the database with our preset data
-        // then fetch it back or just use SEED_DATA
-        console.log("Database is empty, seeding initial data...");
-        setDataState(SEED_DATA);
-        await syncToBackend(SEED_DATA);
-      }
-      
-      setIsLoading(false);
-    };
-
-    init();
-
-    // Live refresh every 5 seconds
-    const interval = setInterval(fetchFromBackend, 5000);
+  try {
+    await client.connect();
+    const db = client.db('test');
+    const collection = db.collection('schooldatas');
     
-    // Refresh instantly when window is focused
-    window.addEventListener("focus", fetchFromBackend);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("focus", fetchFromBackend);
-    };
-  }, [fetchFromBackend]);
-
-  const setData = (newData: SchoolData) => {
-    setDataState(newData);
-    syncToBackend(newData);
-  };
-
-  const updateData = <K extends keyof SchoolData>(key: K, value: SchoolData[K]) => {
-    setDataState((prev: SchoolData) => {
-      const newData = { ...prev, [key]: value };
-      syncToBackend(newData);
-      return newData;
-    });
-  };
-
-  return (
-    <StoreContext.Provider value={{ data, setData, updateData, isLoading }}>
-      {children}
-    </StoreContext.Provider>
-  );
+    // UPSERT (Update existing if any, or insert)
+    await collection.updateOne({}, { $set: SEED_DATA }, { upsert: true });
+    console.log("Seeding successful! Manual data has been transferred to MongoDB Atlas.");
+  } finally {
+    await client.close();
+  }
 }
 
-export function useStore() {
-  const context = useContext(StoreContext);
-  if (!context) throw new Error("useStore must be used within a StoreProvider");
-  return context;
-}
+seed().catch(console.dir);

@@ -186,24 +186,20 @@ function AnnouncementTicker() {
   );
 }
 
-const ATATURK_QUOTES = [
-  "Hayatta en hakiki mürşit ilimdir.",
-  "Milletin bağrından temiz bir kuşak yetişiyor. Bu eseri ona bırakacağım ve gözüm arkamda kalmayacak!",
-  "Gençliği yetiştiriniz. Onlara ilim ve irfanın müspet fikirlerini veriniz.",
-  "Eğitimdir ki, bir milleti ya özgür, bağımsız, şanlı, yüksek bir topluluk halinde yaşatır ya da esarete ve sefalete terk eder.",
-  "Okul genç beyinlere; insanlığa hürmeti, millet ve memleket sevgisini, şerefi, bağımsızlığı öğretir.",
-  "Cumhuriyeti biz kurduk, onu yükseltecek ve yaşatacak olan sizlersiniz."
-];
 
 function AtaturkCorner() {
+  const { data } = useStore();
   const [quoteIndex, setQuoteIndex] = useState(0);
+  const quotes = data.ataturkQuotes && data.ataturkQuotes.length > 0 
+    ? data.ataturkQuotes 
+    : ["Hayatta en hakiki mürşit ilimdir."];
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setQuoteIndex((prev) => (prev + 1) % ATATURK_QUOTES.length);
-    }, 5 * 60 * 1000); // 5 minutes
+      setQuoteIndex((prev) => (prev + 1) % quotes.length);
+    }, 5 * 60 * 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [quotes.length]);
 
   return (
     <div className="rounded-2xl bg-card border border-white/5 shadow-2xl overflow-hidden h-full flex flex-col relative group">
@@ -223,7 +219,7 @@ function AtaturkCorner() {
         {/* Atatürk Portrait - Improved scaling */}
         <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden border border-white/10 shadow-2xl group/img bg-[#080c14] shrink-0">
           <img
-            src="/ataturk_portrait_premium.png"
+            src={data.ataturkImages[0] || "/ataturk_portrait_premium.png"}
             alt="Mustafa Kemal Atatürk"
             className="w-full h-full object-cover object-top transition-all duration-1000 group-hover/img:scale-105"
           />
@@ -237,7 +233,7 @@ function AtaturkCorner() {
           <LucideIcons.Quote className="w-10 h-10 text-amber-500/10 absolute top-4 left-4" />
 
           <p className="text-[17px] font-black text-amber-400 leading-snug relative z-10 italic drop-shadow-[0_2px_10px_rgba(245,158,11,0.2)]">
-            "{ATATURK_QUOTES[quoteIndex]}"
+            "{quotes[quoteIndex]}"
           </p>
 
           <div className="mt-6 flex items-center gap-4 opacity-50">
@@ -327,7 +323,7 @@ export default function Dashboard() {
           </div>
           <div className="text-center space-y-3">
             <p className="text-foreground font-black text-xl uppercase tracking-[0.25em]">
-              Dikmen <span className="text-primary">MTAL</span>
+              {data.schoolName || "Yükleniyor..."}
             </p>
             <p className="text-muted-foreground text-[11px] uppercase tracking-[0.4em] font-black animate-pulse">
               Sistem Hazırlanıyor
@@ -386,7 +382,6 @@ export default function Dashboard() {
             <div>
               <h1 className="text-[38px] font-bold text-foreground tracking-tighter leading-none uppercase" style={{ fontFamily: "var(--font-serif)" }}>
                 {data.schoolName}
-                <span className="ml-4 px-3 py-1 rounded-md bg-primary/10 border border-primary/20 text-[11px] font-black text-primary font-sans align-middle">MTAL</span>
               </h1>
               <p className="text-[14px] text-muted-foreground mt-2 uppercase tracking-[0.5em] font-black opacity-40">
                 Dijital Bilgilendirme Merkezi

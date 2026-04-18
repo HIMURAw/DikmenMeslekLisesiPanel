@@ -388,19 +388,37 @@ function GeneralEditor({
   onUpdateName: (val: string) => void, onUpdateLogo: (val: string) => void, onUpdateFooter: (val: string) => void, 
   onUpdateAtaturkImages: (val: string[]) => void, onUpdateAtaturkInterval: (val: number) => void, onUpdateAtaturkVisible: (val: boolean) => void 
 }) {
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'logo' | 'ataturk') => {
+  const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+      if (result.url) return result.url;
+      throw new Error(result.error || "Yükleme başarısız");
+    } catch (e) {
+      console.error("Upload error:", e);
+      alert("Dosya yüklenirken bir hata oluştu.");
+      return null;
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, target: 'logo' | 'ataturk') => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
         alert("Dosya çok büyük! Lütfen 2MB'dan küçük bir resim seçin.");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (target === 'logo') onUpdateLogo(reader.result as string);
-        else onUpdateAtaturkImages([...ataturkImages, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
+      
+      const url = await uploadFile(file);
+      if (url) {
+        if (target === 'logo') onUpdateLogo(url);
+        else onUpdateAtaturkImages([...ataturkImages, url]);
+      }
     }
   };
 
