@@ -108,6 +108,13 @@ const DEFAULT_DATA: SchoolData = {
   ],
   classes: ["9-A", "9-B", "10-A", "10-B", "11-A", "11-B", "12-A", "12-B"],
   logo: "",
+  lessonsVisible: true,
+  vicePrincipalsVisible: false,
+  ataturkCornerVisible: true,
+  footerText: "© 2026 Dikmen Mesleki ve Teknik Anadolu Lisesi | Eğitimde Kalitenin Adresi | Tüm Hakları Saklıdır",
+  ataturkImages: ["/ataturk_portrait_premium.png"],
+  ataturkInterval: 300,
+  vicePrincipals: []
 };
 
 interface StoreContextType {

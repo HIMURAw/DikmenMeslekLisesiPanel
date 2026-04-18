@@ -97,7 +97,7 @@ export default function AdminPage() {
   const tabs = [
     { id: "general", label: "Genel", icon: LucideIcons.Settings },
     { id: "stats", label: "İstatistikler", icon: LucideIcons.BarChart3 },
-    { id: "lessons", label: "Ders Programı", icon: LucideIcons.BookOpen },
+    { id: "lessons", label: "Ders Programı ve Müdür Yardımcıları", icon: LucideIcons.BookOpen },
     { id: "classes", label: "Sınıflar", icon: LucideIcons.Hash },
     { id: "announcements", label: "Duyurular", icon: LucideIcons.Megaphone },
     { id: "duty", label: "Nöbetçiler", icon: LucideIcons.ShieldCheck },
@@ -167,13 +167,41 @@ export default function AdminPage() {
             <GeneralEditor 
               schoolName={data.schoolName} 
               logo={data.logo}
+              footerText={data.footerText}
+              ataturkImages={data.ataturkImages || []}
+              ataturkInterval={data.ataturkInterval || 300}
+              ataturkVisible={data.ataturkCornerVisible !== false}
               onUpdateName={(val) => updateData("schoolName", val)} 
               onUpdateLogo={(val) => updateData("logo", val)}
+              onUpdateFooter={(val) => updateData("footerText", val)}
+              onUpdateAtaturkImages={(val) => updateData("ataturkImages", val)}
+              onUpdateAtaturkInterval={(val) => updateData("ataturkInterval", val)}
+              onUpdateAtaturkVisible={(val) => updateData("ataturkCornerVisible", val)}
             />
           )}
           {activeTab === "stats" && <StatsEditor data={data.stats || []} onUpdate={(val) => updateData("stats", val)} />}
           {activeTab === "announcements" && <AnnouncementsEditor data={data.announcements || []} onUpdate={(val) => updateData("announcements", val)} />}
-          {activeTab === "lessons" && <LessonsEditor data={data.lessons || []} onUpdate={(val) => updateData("lessons", val)} />}
+          {activeTab === "lessons" && (
+            <div className="space-y-8">
+              <LessonsEditor 
+                data={data.lessons || []} 
+                onUpdate={(val) => updateData("lessons", val)} 
+                onUpdateVisible={(val) => {
+                  updateData("lessonsVisible", val);
+                  if (val) updateData("vicePrincipalsVisible", false);
+                }} 
+              />
+              <VicePrincipalsEditor 
+                data={data.vicePrincipals || []} 
+                visible={data.vicePrincipalsVisible}
+                onUpdate={(val) => updateData("vicePrincipals", val)} 
+                onUpdateVisible={(val) => {
+                  updateData("vicePrincipalsVisible", val);
+                  if (val) updateData("lessonsVisible", false);
+                }} 
+              />
+            </div>
+          )}
           {activeTab === "classes" && <ClassesEditor data={data.classes || []} onUpdate={(val) => updateData("classes", val)} />}
           {activeTab === "duty" && <DutyEditor data={data.dutyOfficers || []} onUpdate={(val) => updateData("dutyOfficers", val)} />}
           {activeTab === "departments" && <DepartmentsEditor data={data.departments || []} onUpdate={(val) => updateData("departments", val)} />}
@@ -187,17 +215,25 @@ export default function AdminPage() {
 
 // ─── Editors ──────────────────────────────────────────────────────────────────
 
-function GeneralEditor({ schoolName, logo, onUpdateName, onUpdateLogo }: { schoolName: string, logo?: string, onUpdateName: (val: string) => void, onUpdateLogo: (val: string) => void }) {
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+function GeneralEditor({ 
+  schoolName, logo, footerText, ataturkImages, ataturkInterval, ataturkVisible, 
+  onUpdateName, onUpdateLogo, onUpdateFooter, onUpdateAtaturkImages, onUpdateAtaturkInterval, onUpdateAtaturkVisible 
+}: { 
+  schoolName: string, logo?: string, footerText: string, ataturkImages: string[], ataturkInterval: number, ataturkVisible: boolean, 
+  onUpdateName: (val: string) => void, onUpdateLogo: (val: string) => void, onUpdateFooter: (val: string) => void, 
+  onUpdateAtaturkImages: (val: string[]) => void, onUpdateAtaturkInterval: (val: number) => void, onUpdateAtaturkVisible: (val: boolean) => void 
+}) {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'logo' | 'ataturk') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024) {
-        alert("Dosya çok büyük! Lütfen 1MB'dan küçük bir resim seçin.");
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Dosya çok büyük! Lütfen 2MB'dan küçük bir resim seçin.");
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        onUpdateLogo(reader.result as string);
+        if (target === 'logo') onUpdateLogo(reader.result as string);
+        else onUpdateAtaturkImages([...ataturkImages, reader.result as string]);
       };
       reader.readAsDataURL(file);
     }
@@ -211,7 +247,6 @@ function GeneralEditor({ schoolName, logo, onUpdateName, onUpdateLogo }: { schoo
         Okul Ayarları
       </h3>
       <div className="space-y-6 relative z-10">
-        {/* Logo Bölümü */}
         <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-white/5 border border-dashed border-white/10">
           <div className="relative group">
             <div className="w-24 h-24 rounded-2xl bg-[#07101e] border border-white/10 flex items-center justify-center overflow-hidden shadow-2xl transition-transform group-hover:scale-105">
@@ -231,12 +266,74 @@ function GeneralEditor({ schoolName, logo, onUpdateName, onUpdateLogo }: { schoo
             )}
           </div>
           <div className="text-center">
-            <label className="cursor-pointer bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all">
+              <label className="cursor-pointer bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all">
               Logo Yükle
-              <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
             </label>
             <p className="text-[10px] text-slate-500 mt-2">Önerilen: 200x200 PNG/JPG (Maks 1MB)</p>
           </div>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t border-white/5">
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Anasayfa Bölüm Kontrolleri</label>
+          {/* 
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 group transition-all hover:border-violet-500/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-500">
+                <LucideIcons.Star className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">Atatürk Köşesi</p>
+                <p className="text-[10px] text-slate-500">Anasayfanın sol tarafında gösterilir.</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => onUpdateAtaturkVisible(!ataturkVisible)}
+              className={`w-12 h-6 rounded-full relative transition-all ${ataturkVisible ? 'bg-violet-600' : 'bg-slate-800'}`}
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${ataturkVisible ? 'left-6' : 'left-1'}`} />
+            </button>
+          </div>
+          */}
+
+          {/* Atatürk Photos Slideshow Management */}
+          {ataturkVisible && (
+            <div className="space-y-4 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Atatürk Köşesi Slayt Yönetimi</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-600 font-bold">Geçiş:</span>
+                  <input 
+                    type="number" 
+                    className="w-16 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none" 
+                    value={ataturkInterval} 
+                    onChange={e => onUpdateAtaturkInterval(Number(e.target.value))}
+                    min={5}
+                  />
+                  <span className="text-[10px] text-slate-600 font-bold underline">sn</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-4 gap-3">
+                {ataturkImages.map((img, idx) => (
+                  <div key={idx} className="relative group/img aspect-square rounded-xl overflow-hidden border border-white/10 bg-white/5">
+                    <img src={img} className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => onUpdateAtaturkImages(ataturkImages.filter((_, i) => i !== idx))}
+                      className="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-lg flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+                    >
+                      <LucideIcons.Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                <label className="aspect-square rounded-xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-violet-500/50 hover:bg-white/5 transition-all">
+                  <LucideIcons.ImagePlus className="w-5 h-5 text-slate-600" />
+                  <span className="text-[9px] font-bold text-slate-500 uppercase">Ekle</span>
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'ataturk')} />
+                </label>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -245,6 +342,17 @@ function GeneralEditor({ schoolName, logo, onUpdateName, onUpdateLogo }: { schoo
             value={schoolName}
             onChange={e => onUpdateName(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:border-violet-500 transition-all outline-none"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Footer (Alt Bilgi) Metni</label>
+          <textarea
+            value={footerText}
+            onChange={e => onUpdateFooter(e.target.value)}
+            rows={2}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:border-violet-500 transition-all outline-none text-sm"
+            placeholder="Ekranın en altında kayacak metni yazın..."
           />
         </div>
       </div>
@@ -394,78 +502,101 @@ const VOCATIONAL_LESSONS = [
   "Din Kültürü ve Ahlâk Bilgisi", "Beden Eğitimi ve Spor", "Görsel Sanatlar / Müzik", "Rehberlik"
 ];
 
-function LessonsEditor({ data, onUpdate }: { data: Lesson[], onUpdate: (data: Lesson[]) => void }) {
+function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], onUpdate: (data: Lesson[]) => void, onUpdateVisible: (val: boolean) => void }) {
   const { data: storeData } = useStore();
 
   return (
-    <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl overflow-hidden shadow-2xl">
-      <table className="w-full text-left">
-        <thead className="bg-white/5 border-b border-white/10">
-          <tr>
-            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Saat</th>
-            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Ders</th>
-            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Öğretmen</th>
-            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Sınıf</th>
-            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Durum / İşlem</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-white/[0.04]">
-          {data.map((item, idx) => (
-            <tr key={item.id} className={`hover:bg-white/[0.02] transition-colors group ${!item.visible ? 'opacity-40 grayscale' : ''}`}>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex flex-col gap-1">
-                  <input type="time" className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white" value={item.time} onChange={e => {
-                    const newData = [...data]; newData[idx] = { ...item, time: e.target.value }; onUpdate(newData);
-                  }} />
-                  <input type="time" className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-400" value={item.end} onChange={e => {
-                    const newData = [...data]; newData[idx] = { ...item, end: e.target.value }; onUpdate(newData);
-                  }} />
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none" value={item.lesson} onChange={e => {
-                  const newData = [...data]; newData[idx] = { ...item, lesson: e.target.value }; onUpdate(newData);
-                }}>
-                  <option value="">Ders Seçin...</option>
-                  {VOCATIONAL_LESSONS.map(l => <option key={l} value={l}>{l}</option>)}
-                </select>
-              </td>
-              <td className="px-6 py-4">
-                <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none" value={item.teacher} onChange={e => {
-                  const newData = [...data]; newData[idx] = { ...item, teacher: e.target.value }; onUpdate(newData);
-                }}>
-                  <option value="">Öğretmen Seçin...</option>
-                  {(storeData.teachers || []).map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
-                </select>
-              </td>
-              <td className="px-6 py-4">
-                <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none" value={item.class} onChange={e => {
-                  const newData = [...data]; newData[idx] = { ...item, class: e.target.value }; onUpdate(newData);
-                }}>
-                  <option value="">Sınıf Seçin...</option>
-                  {(storeData.classes || []).map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </td>
-              <td className="px-6 py-4 text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <button onClick={() => {
-                    const newData = [...data]; newData[idx] = { ...item, visible: item.visible === false ? true : false }; onUpdate(newData);
-                  }} className={`p-2 rounded-lg transition-all ${item.visible !== false ? 'text-violet-400 bg-violet-400/10' : 'text-slate-600 bg-white/5'}`}>
-                    {item.visible !== false ? <LucideIcons.Eye className="w-4 h-4" /> : <LucideIcons.EyeOff className="w-4 h-4" />}
-                  </button>
-                  <button onClick={() => onUpdate(data.filter(li => li.id !== item.id))} className="p-2 text-rose-500/30 hover:text-rose-500 transition-all">
-                    <LucideIcons.Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="p-4 bg-white/5 border-t border-white/10 flex justify-center">
-        <button onClick={() => onUpdate([...data, { id: Date.now().toString(), time: "08:15", end: "08:55", lesson: "", teacher: "", class: "", room: "Derslik", status: "upcoming", visible: true }])} className="px-8 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg">
-          + Yeni Ders Satırı Ekle
+    <div className="space-y-4">
+      <div className="flex items-center justify-between p-6 bg-[#0c1829] border border-white/[0.06] rounded-2xl shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
+            <LucideIcons.BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-white">Ders Programı Görünürlüğü</h3>
+            <p className="text-xs text-slate-500">Bu ayar kapalıyken ders programı ana sayfada gizlenir.</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => {
+            const { lessonsVisible } = storeData;
+            onUpdateVisible(!lessonsVisible);
+          }}
+          className={`w-14 h-7 rounded-full relative transition-all ${storeData.lessonsVisible !== false ? 'bg-cyan-600' : 'bg-slate-800'}`}
+        >
+          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${storeData.lessonsVisible !== false ? 'left-8' : 'left-1'}`} />
         </button>
+      </div>
+
+      <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl overflow-hidden shadow-2xl">
+        <table className="w-full text-left">
+          <thead className="bg-white/5 border-b border-white/10">
+            <tr>
+              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Saat</th>
+              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Ders</th>
+              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Öğretmen</th>
+              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Sınıf</th>
+              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Durum / İşlem</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.04]">
+            {data.map((item, idx) => (
+              <tr key={item.id} className={`hover:bg-white/[0.02] transition-colors group ${!item.visible ? 'opacity-40 grayscale' : ''}`}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex flex-col gap-1">
+                    <input type="time" className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white" value={item.time} onChange={e => {
+                      const newData = [...data]; newData[idx] = { ...item, time: e.target.value }; onUpdate(newData);
+                    }} />
+                    <input type="time" className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-400" value={item.end} onChange={e => {
+                      const newData = [...data]; newData[idx] = { ...item, end: e.target.value }; onUpdate(newData);
+                    }} />
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none" value={item.lesson} onChange={e => {
+                    const newData = [...data]; newData[idx] = { ...item, lesson: e.target.value }; onUpdate(newData);
+                  }}>
+                    <option value="">Ders Seçin...</option>
+                    {VOCATIONAL_LESSONS.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </td>
+                <td className="px-6 py-4">
+                  <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none" value={item.teacher} onChange={e => {
+                    const newData = [...data]; newData[idx] = { ...item, teacher: e.target.value }; onUpdate(newData);
+                  }}>
+                    <option value="">Öğretmen Seçin...</option>
+                    {(storeData.teachers || []).map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                  </select>
+                </td>
+                <td className="px-6 py-4">
+                  <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none" value={item.class} onChange={e => {
+                    const newData = [...data]; newData[idx] = { ...item, class: e.target.value }; onUpdate(newData);
+                  }}>
+                    <option value="">Sınıf Seçin...</option>
+                    {(storeData.classes || []).map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <button onClick={() => {
+                      const newData = [...data]; newData[idx] = { ...item, visible: item.visible === false ? true : false }; onUpdate(newData);
+                    }} className={`p-2 rounded-lg transition-all ${item.visible !== false ? 'text-violet-400 bg-violet-400/10' : 'text-slate-600 bg-white/5'}`}>
+                      {item.visible !== false ? <LucideIcons.Eye className="w-4 h-4" /> : <LucideIcons.EyeOff className="w-4 h-4" />}
+                    </button>
+                    <button onClick={() => onUpdate(data.filter(li => li.id !== item.id))} className="p-2 text-rose-500/30 hover:text-rose-500 transition-all">
+                      <LucideIcons.Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="p-4 bg-white/5 border-t border-white/10 flex justify-center">
+          <button onClick={() => onUpdate([...data, { id: Date.now().toString(), time: "08:15", end: "08:55", lesson: "", teacher: "", class: "", room: "Derslik", status: "upcoming", visible: true }])} className="px-8 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg">
+            + Yeni Ders Satırı Ekle
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,12 @@
-import { LucideIcon } from "lucide-react";
-
-export type LessonStatus = "done" | "active" | "next" | "upcoming";
+export interface Announcement {
+  id: string;
+  title: string;
+  desc: string;
+  date: string;
+  icon: string;
+  type: "Bilgi" | "Önemli" | "Sınav" | "Etkinlik";
+  visible?: boolean;
+}
 
 export interface Lesson {
   id: string;
@@ -10,18 +16,8 @@ export interface Lesson {
   teacher: string;
   class: string;
   room: string;
-  status: LessonStatus;
-  visible: boolean;
-}
-
-export interface Announcement {
-  id: string;
-  title: string;
-  desc: string;
-  type: "Önemli" | "Bilgi" | "Sınav" | "Etkinlik";
-  icon: string;
-  date: string;
-  visible: boolean;
+  status: "active" | "upcoming" | "finished";
+  visible?: boolean;
 }
 
 export interface DutyOfficer {
@@ -30,8 +26,8 @@ export interface DutyOfficer {
   area: string;
   shift: string;
   active: boolean;
-  visible: boolean;
-  date: string; // YYYY-MM-DD format
+  date: string;
+  visible?: boolean;
 }
 
 export interface StatItem {
@@ -39,10 +35,10 @@ export interface StatItem {
   label: string;
   value: string;
   sub: string;
-  iconName: string; // Dynamic icon name to be mapped
+  iconName: string;
   gradient: string;
   shadowColor: string;
-  visible: boolean;
+  visible?: boolean;
 }
 
 export interface CalendarEvent {
@@ -51,8 +47,8 @@ export interface CalendarEvent {
   month: number;
   year: number;
   label: string;
-  color: "rose" | "amber" | "violet" | "cyan";
-  visible: boolean;
+  color: string;
+  visible?: boolean;
 }
 
 export interface Department {
@@ -70,6 +66,20 @@ export interface Teacher {
   visible: boolean;
 }
 
+export type LessonStatus = "active" | "upcoming" | "finished";
+
+export interface VicePrincipal {
+  id: string;
+  name: string;
+  availability: {
+    monday: boolean;
+    tuesday: boolean;
+    wednesday: boolean;
+    thursday: boolean;
+    friday: boolean;
+  };
+}
+
 export interface SchoolData {
   stats: StatItem[];
   lessons: Lesson[];
@@ -81,4 +91,11 @@ export interface SchoolData {
   classes: string[];
   schoolName: string;
   logo?: string;
+  lessonsVisible: boolean;
+  vicePrincipalsVisible: boolean;
+  ataturkCornerVisible: boolean;
+  footerText: string;
+  ataturkImages: string[];
+  ataturkInterval: number;
+  vicePrincipals: VicePrincipal[];
 }
