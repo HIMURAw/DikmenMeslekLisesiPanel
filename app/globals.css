@@ -84,22 +84,31 @@
 
 .dark {
   /* ── Deep Midnight + Neon Theme ── */
-  --background: oklch(0.08 0.02 250);          /* Deeper midnight bg */
-  --foreground: oklch(0.98 0.01 250);          /* Crisp white text */
-  --card: oklch(0.12 0.03 250);                /* Card bg with slightly more blue */
+  --background: oklch(0.08 0.02 250);
+  /* Deeper midnight bg */
+  --foreground: oklch(0.98 0.01 250);
+  /* Crisp white text */
+  --card: oklch(0.12 0.03 250);
+  /* Card bg with slightly more blue */
   --card-foreground: oklch(0.95 0.01 250);
   --popover: oklch(0.12 0.03 250);
   --popover-foreground: oklch(0.95 0.01 250);
-  --primary: oklch(0.65 0.25 285);             /* Vibrant neon violet */
+  --primary: oklch(0.65 0.25 285);
+  /* Vibrant neon violet */
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.18 0.04 250);           /* Muted navy secondary */
+  --secondary: oklch(0.18 0.04 250);
+  /* Muted navy secondary */
   --secondary-foreground: oklch(0.90 0.02 250);
   --muted: oklch(0.18 0.04 250);
-  --muted-foreground: oklch(0.60 0.02 250);    /* Slate grey */
-  --accent: oklch(0.70 0.20 285);              /* Lighter violet accent */
+  --muted-foreground: oklch(0.60 0.02 250);
+  /* Slate grey */
+  --accent: oklch(0.70 0.20 285);
+  /* Lighter violet accent */
   --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.60 0.22 25);          /* Vivid rose */
-  --border: oklch(1 0 0 / 12%);                /* Subtle borders */
+  --destructive: oklch(0.60 0.22 25);
+  /* Vivid rose */
+  --border: oklch(1 0 0 / 12%);
+  /* Subtle borders */
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.65 0.25 285 / 50%);
   --sidebar: oklch(0.10 0.03 250);
@@ -116,9 +125,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
@@ -128,17 +139,21 @@
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--primary), 0.2) transparent;
   }
+
   .dark *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
+
   .dark *::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .dark *::-webkit-scrollbar-thumb {
     background: oklch(0.65 0.25 285 / 20%);
     border-radius: 999px;
   }
+
   .dark *::-webkit-scrollbar-thumb:hover {
     background: oklch(0.65 0.25 285 / 40%);
   }
@@ -167,38 +182,79 @@
    Keyframes
 ══════════════════════════════════════ */
 @keyframes ticker-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes carousel-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes vertical-scroll {
-  0%   { transform: translateY(0); }
-  100% { transform: translateY(-50%); }
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-50%);
+  }
 }
 
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes glow-pulse-anim {
-  0%, 100% { opacity: 0.45; transform: scale(1);    }
-  50%       { opacity: 0.85; transform: scale(1.06); }
+
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: scale(1.06);
+  }
 }
 
 @keyframes ring-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ══════════════════════════════════════
@@ -213,12 +269,13 @@
 }
 
 @utility animate-vertical-scroll {
-  animation: vertical-scroll 80s linear infinite;
+  animation: vertical-scroll 150s linear infinite;
 }
 
 @utility scrollbar-hidden {
   -ms-overflow-style: none;
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -272,12 +329,10 @@
 }
 
 @utility animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.06) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.06) 50%,
+      transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2.5s linear infinite;
 }

@@ -10,6 +10,7 @@ const SchoolDataSchema = new Schema({
   ataturkImages: { type: [String], default: [] },
   ataturkInterval: { type: Number, default: 300 },
   ataturkQuotes: { type: [String], default: [] },
+  vicePrincipalsAwayMessage: { type: String, default: "Müdür yardımcılarımız şu an odalarında bulunmamaktadır." },
   stats: [
     {
       id: String,
@@ -85,6 +86,8 @@ const SchoolDataSchema = new Schema({
         wednesday: Boolean,
         thursday: Boolean,
         friday: Boolean,
+        saturday: Boolean,
+        sunday: Boolean,
       },
     },
   ],

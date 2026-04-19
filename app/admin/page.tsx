@@ -359,11 +359,13 @@ export default function AdminPage() {
               <VicePrincipalsEditor 
                 data={data.vicePrincipals || []} 
                 visible={data.vicePrincipalsVisible}
+                awayMessage={data.vicePrincipalsAwayMessage || ""}
                 onUpdate={syncVPsWithTeachers} 
                 onUpdateVisible={(val) => {
                   updateData("vicePrincipalsVisible", val);
                   if (val) updateData("lessonsVisible", false);
                 }} 
+                onUpdateAwayMessage={(val) => updateData("vicePrincipalsAwayMessage", val)}
               />
             </div>
           )}
@@ -788,11 +790,13 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
   );
 }
 
-function VicePrincipalsEditor({ data, visible, onUpdate, onUpdateVisible }: { 
+function VicePrincipalsEditor({ data, visible, awayMessage, onUpdate, onUpdateVisible, onUpdateAwayMessage }: { 
   data: VicePrincipal[], 
   visible: boolean,
+  awayMessage: string,
   onUpdate: (data: VicePrincipal[]) => void, 
-  onUpdateVisible: (val: boolean) => void 
+  onUpdateVisible: (val: boolean) => void,
+  onUpdateAwayMessage: (val: string) => void
 }) {
   const days = [
     { key: "monday", label: "Pazartesi" },
@@ -809,9 +813,9 @@ function VicePrincipalsEditor({ data, visible, onUpdate, onUpdateVisible }: {
       id: Date.now().toString(),
       name: "",
       visible: true,
-      availability: {
-        monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: false, sunday: false
-      }
+        availability: {
+          monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: false, sunday: false
+        }
     };
     onUpdate([...data, newVP]);
   };
@@ -829,11 +833,27 @@ function VicePrincipalsEditor({ data, visible, onUpdate, onUpdateVisible }: {
           </div>
         </div>
         <button 
-          onClick={() => onUpdateVisible(!visible)}
-          className={`w-14 h-7 rounded-full relative transition-all ${visible ? 'bg-violet-600' : 'bg-slate-800'}`}
+          onClick={() => onUpdateVisible(visible === false ? true : false)}
+          className={`w-14 h-7 rounded-full relative transition-all ${visible !== false ? 'bg-violet-600' : 'bg-slate-800'}`}
         >
-          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${visible ? 'left-8' : 'left-1'}`} />
+          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${visible !== false ? 'left-8' : 'left-1'}`} />
         </button>
+      </div>
+      
+      <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <LucideIcons.MessageSquare className="w-4 h-4 text-amber-500" />
+          </div>
+          <h4 className="text-sm font-black text-white uppercase tracking-widest">Müsait Olunmadığında Görünecek Mesaj</h4>
+        </div>
+        <textarea 
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-violet-500 transition-all min-h-[100px]"
+          value={awayMessage}
+          onChange={e => onUpdateAwayMessage(e.target.value)}
+          placeholder="Örn: Müdür yardımcılarımız şu an öğle arasındadır..."
+        />
+        <p className="text-[10px] text-slate-500 font-bold italic">Bu mesaj, müdür yardımcıları görünürlüğü açık olduğu halde kimse müsait değilse veya öğle arasındaysa ekranda görünecektir.</p>
       </div>
 
       <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl overflow-hidden shadow-2xl">
@@ -875,7 +895,7 @@ function VicePrincipalsEditor({ data, visible, onUpdate, onUpdateVisible }: {
                 </div>
               </div>
 
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                 {days.map(day => (
                   <button
                     key={day.key}

@@ -268,7 +268,7 @@ function TeachersVerticalMarquee() {
       </div>
 
       {/* Marquee area */}
-      <div className="flex-1 relative overflow-hidden bg-[#080c14]/30">
+      <div className="flex-1 relative overflow-hidden bg-[#080c14]/30 h-[408px]">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-card to-transparent z-10" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-card to-transparent z-10" />
 
@@ -276,16 +276,16 @@ function TeachersVerticalMarquee() {
           {marqueeItems.map((t, i) => (
             <div
               key={i}
-              className="flex items-center gap-4 p-3 rounded-xl bg-foreground/[0.02] border border-white/5 hover:border-primary/30 transition-all group/teacher-item"
+              className="flex items-center gap-4 p-3 h-[85px] rounded-xl bg-foreground/[0.02] border border-white/5 hover:border-primary/30 transition-all group/teacher-item"
             >
-              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm border border-primary/10 group-hover/teacher-item:bg-primary group-hover/teacher-item:text-primary-foreground transition-all">
+              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm border border-primary/10 group-hover/teacher-item:bg-primary group-hover/teacher-item:text-primary-foreground transition-all shrink-0">
                 {t.name[0]}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[17px] font-black text-foreground leading-tight truncate uppercase tracking-tight">{t.name}</p>
-                <p className="text-[12px] text-muted-foreground mt-1 truncate uppercase tracking-widest font-black opacity-40">{t.role}</p>
+                <p className="text-[18px] font-black text-foreground leading-tight truncate uppercase tracking-tight">{t.name}</p>
+                <p className="text-[12px] text-muted-foreground mt-1.5 truncate uppercase tracking-widest font-black opacity-40 leading-none">{t.role}</p>
               </div>
-              <LucideIcons.ChevronRight className="w-3 h-3 text-muted-foreground/20 group-hover/teacher-item:text-primary transition-colors" />
+              <LucideIcons.ChevronRight className="w-4 h-4 text-muted-foreground/20 group-hover/teacher-item:text-primary transition-colors" />
             </div>
           ))}
         </div>
@@ -467,25 +467,13 @@ export default function Dashboard() {
 
           {/* Center: Schedule / VPs */}
           {(data.lessonsVisible !== false || data.vicePrincipalsVisible) && (
-            <div className="col-span-3 h-full rounded-2xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col">
+            <div className="col-span-3 h-full rounded-2xl bg-card border border-white/5 shadow-2xl overflow-hidden flex flex-col relative group">
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
+              
               {(() => {
                 const hour = currentTime.getHours();
                 const minutes = currentTime.getMinutes();
                 const isBreakTime = hour === 13 && minutes >= 0 && minutes <= 40;
-
-                if (isBreakTime) {
-                  return (
-                    <div className="flex-1 flex flex-col items-center justify-center p-10 text-center bg-gradient-to-b from-amber-500/5 to-transparent">
-                      <div className="w-20 h-20 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-8 animate-bounce">
-                        <LucideIcons.Coffee className="w-10 h-10 text-amber-500" />
-                      </div>
-                      <h3 className="text-2xl font-black text-amber-500 uppercase tracking-tighter mb-3">Öğle Arası</h3>
-                      <p className="text-sm font-black text-muted-foreground leading-relaxed uppercase tracking-widest">
-                        Okulumuzda şu an öğle molası verilmiştir.
-                      </p>
-                    </div>
-                  );
-                }
 
                 if (data.vicePrincipalsVisible) {
                   const dayNames: { [key: number]: keyof VicePrincipal["availability"] } = {
@@ -496,34 +484,76 @@ export default function Dashboard() {
 
                   return (
                     <>
-                      <div className="px-5 py-3.5 border-b border-white/5 bg-foreground/[0.02]">
+                      <div className="px-5 py-3.5 border-b border-white/5 bg-foreground/[0.02] relative z-10">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
                             <LucideIcons.UserCheck className="w-5 h-5 text-primary" />
                           </div>
-                          <h2 className="text-[17px] font-black text-foreground uppercase tracking-widest">Müsait Müdür Yardımcıları</h2>
+                          <h2 className="text-[14px] font-black text-foreground uppercase tracking-widest">Müsait Müdür Yardımcıları</h2>
                         </div>
                       </div>
-                      <div className="overflow-y-auto scrollbar-hidden flex-1 p-4 space-y-3 bg-[#080c14]/30">
-                        {visibleVPs.length > 0 ? (
-                          visibleVPs.map((vp) => (
-                            <div key={vp.id} className="p-4 rounded-xl bg-card border border-white/5 flex items-center gap-4 hover:border-primary/30 transition-all group">
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                                <LucideIcons.User className="w-5 h-5 text-primary" />
+                      
+                      <div className="overflow-y-auto scrollbar-hidden flex-1 p-0 relative z-10 flex flex-col">
+                        {isBreakTime || visibleVPs.length === 0 ? (
+                          <div className="flex-1 flex flex-col p-6 h-full relative group">
+                            {/* Decorative corner borders - Highly Visible "Köşe" Style */}
+                            <div className="absolute top-8 left-8 w-12 h-12 border-t-[3px] border-l-[3px] border-primary/40 rounded-tl-2xl z-20 transition-all group-hover:border-primary group-hover:w-16 group-hover:h-16" />
+                            <div className="absolute top-8 right-8 w-12 h-12 border-t-[3px] border-r-[3px] border-primary/40 rounded-tr-2xl z-20 transition-all group-hover:border-primary group-hover:w-16 group-hover:h-16" />
+                            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-[3px] border-l-[3px] border-primary/40 rounded-bl-2xl z-20 transition-all group-hover:border-primary group-hover:w-16 group-hover:h-16" />
+                            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-[3px] border-r-[3px] border-primary/40 rounded-br-2xl z-20 transition-all group-hover:border-primary group-hover:w-16 group-hover:h-16" />
+
+                            <div className="flex-1 bg-[#0c1420] border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-[0_0_50px_rgba(var(--primary),0.05)]">
+                              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/10 opacity-30" />
+                              
+                              <div className="relative z-10 space-y-10 max-w-[280px]">
+                                <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto shadow-2xl shadow-primary/20 relative">
+                                  <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                                  <LucideIcons.Clock className="w-12 h-12 text-primary relative z-10" />
+                                </div>
+                                
+                                <div className="space-y-6 pt-6 border-t border-white/10 relative">
+                                  <LucideIcons.Quote className="w-8 h-8 text-primary/10 absolute -top-4 left-1/2 -translate-x-1/2 bg-[#0c1420] px-2" />
+                                  <p className="text-[19px] sm:text-[22px] font-black text-foreground leading-[1.4] uppercase tracking-tight italic drop-shadow-2xl">
+                                    "{data.vicePrincipalsAwayMessage || (isBreakTime ? 'Müdür yardımcılarımız şu an öğle arasındadır.' : 'Müdür yardımcılarımız şu an odalarında bulunmamaktadır.')}"
+                                  </p>
+                                  <div className="h-1 w-16 bg-primary/60 mx-auto rounded-full shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
+                                  <div className="pt-2">
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] opacity-80">
+                                      DİJİTAL BİLGİLENDİRME SİSTEMİ
+                                    </p>
+                                    <p className="text-[9px] text-muted-foreground font-bold mt-2 opacity-30">© DİKMEN MTAL</p>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[17px] font-black text-foreground truncate uppercase tracking-tight">{vp.name}</p>
-                                <p className="text-[12px] text-emerald-400 font-black uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                  Şu An Odasında
-                                </p>
-                              </div>
+
+                              {isBreakTime && (
+                                <div className="absolute bottom-10 left-0 right-0 flex justify-center">
+                                  <div className="px-8 py-2.5 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-xl shadow-2xl">
+                                    <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                      ÖĞLE ARASI: 13:00 - 13:40
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          ))
+                          </div>
                         ) : (
-                          <div className="h-full flex flex-col items-center justify-center text-center opacity-20 py-20">
-                            <LucideIcons.UserX className="w-10 h-10 mb-2" />
-                            <p className="text-[11px] font-black uppercase tracking-widest">Müsait Kimse Yok</p>
+                          <div className="p-4 space-y-3 bg-[#080c14]/30 flex-1">
+                            {visibleVPs.map((vp) => (
+                              <div key={vp.id} className="p-4 rounded-xl bg-card border border-white/5 flex items-center gap-4 hover:border-primary/30 transition-all group/vp">
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 group-hover/vp:scale-105 transition-transform">
+                                  <LucideIcons.User className="w-5 h-5 text-primary" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[17px] font-black text-foreground truncate uppercase tracking-tight">{vp.name}</p>
+                                  <p className="text-[12px] text-emerald-400 font-black uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    Şu An Odasında
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -542,7 +572,13 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="overflow-y-auto scrollbar-hidden flex-1 p-5 space-y-4">
-                      {data.lessons.filter(l => l.visible !== false).length > 0 ? (
+                      {isBreakTime ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center p-6 bg-cyan-500/5 rounded-2xl border border-cyan-500/10">
+                           <LucideIcons.Coffee className="w-10 h-10 text-cyan-500 mb-6 opacity-40 animate-pulse" />
+                           <h3 className="text-xl font-black text-cyan-500 uppercase tracking-tighter mb-2">Öğle Tatili</h3>
+                           <p className="text-[12px] font-black text-muted-foreground uppercase tracking-widest">Eğitime kısa bir ara verildi.</p>
+                        </div>
+                      ) : data.lessons.filter(l => l.visible !== false).length > 0 ? (
                         data.lessons.filter(l => l.visible !== false).map((row) => (
                           <div
                             key={row.id}
@@ -563,7 +599,7 @@ export default function Dashboard() {
                           </div>
                         ))
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-full opacity-20 gap-4 py-20">
+                        <div className="flex flex-col items-center justify-center h-full opacity-20 gap-4 py-20 grayscale">
                           <LucideIcons.FileSearch className="w-14 h-14" />
                           <p className="text-[12px] font-black uppercase tracking-[0.3em]">Aktif Ders Yok</p>
                         </div>
@@ -578,8 +614,8 @@ export default function Dashboard() {
           {/* Right: Duty Schedule & Teachers */}
           <div className={`${(data.ataturkCornerVisible === false && data.lessonsVisible === false && !data.vicePrincipalsVisible) ? 'col-span-12' : (data.ataturkCornerVisible === false || (data.lessonsVisible === false && !data.vicePrincipalsVisible)) ? 'col-span-9' : 'col-span-6'} flex flex-col gap-6 h-full`}>
 
-            {/* Nöbetçiler */}
-            <div className="rounded-2xl bg-card border border-white/5 shadow-2xl p-6 relative overflow-hidden group/duty">
+            {/* Nöbetçiler - Back to Top */}
+            <div className="rounded-2xl bg-card border border-white/5 shadow-2xl p-6 relative overflow-hidden group/duty shrink-0">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
@@ -673,7 +709,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Teacher Marquee */}
+            {/* Teacher Marquee - Back to Bottom */}
             <div className="flex-1 min-h-0">
               <TeachersVerticalMarquee />
             </div>

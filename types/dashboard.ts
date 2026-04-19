@@ -101,5 +101,6 @@ export interface SchoolData {
   ataturkImages: string[];
   ataturkInterval: number;
   ataturkQuotes: string[];
+  vicePrincipalsAwayMessage?: string;
   vicePrincipals: VicePrincipal[];
 }
