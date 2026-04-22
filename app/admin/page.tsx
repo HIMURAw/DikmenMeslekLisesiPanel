@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
+import { useToast } from "@/lib/toast-context";
 import * as LucideIcons from "lucide-react";
 import {
   Announcement,
@@ -12,7 +13,9 @@ import {
   Department,
   Teacher,
   LessonStatus,
-  VicePrincipal
+  VicePrincipal,
+  TimeInterval,
+  SchoolData
 } from "@/types/dashboard";
 
 // ─── Login Component ──────────────────────────────────────────────────────────
@@ -101,8 +104,60 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
 
 export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const { data, updateData, isLoading } = useStore();
+  const { data: storeData, setData: setStoreData, isLoading } = useStore();
+  const { addToast } = useToast();
+  const [localData, setLocalData] = useState<SchoolData | null>(null);
   const [activeTab, setActiveTab] = useState<string>("general");
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Initialize localData from storeData once
+  useEffect(() => {
+    if (!isLoading && storeData && !localData) {
+      setLocalData(storeData);
+    }
+  }, [isLoading, storeData, localData]);
+
+  // Check for changes
+  useEffect(() => {
+    if (localData && storeData) {
+      const changed = JSON.stringify(localData) !== JSON.stringify(storeData);
+      setHasChanges(changed);
+    }
+  }, [localData, storeData]);
+
+  const updateLocalData = <K extends keyof SchoolData>(key: K, value: SchoolData[K]) => {
+    setLocalData((prev) => {
+      if (!prev) return prev;
+      return { ...prev, [key]: value };
+    });
+  };
+
+  const handleSave = async () => {
+    if (!localData) return;
+    setIsSaving(true);
+    try {
+      const success = await setStoreData(localData);
+      if (success) {
+        addToast("Tüm değişiklikler başarıyla kaydedildi! ✅", "success", 3000);
+        // We don't need to do anything else, hasChanges will become false automatically 
+        // after the next store poll or the immediate state update.
+      } else {
+        throw new Error("Kayıt sunucu tarafından reddedildi.");
+      }
+    } catch (e: any) {
+      console.error("Save error:", e);
+      addToast(`Kaydedilirken bir hata oluştu: ${e.message} ❌`, "error", 4000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDiscard = () => {
+    if (confirm("Tüm kaydedilmemiş değişiklikleriniz silinecek. Emin misiniz?")) {
+      setLocalData(storeData);
+    }
+  };
 
   // Check session
   useEffect(() => {
@@ -112,8 +167,8 @@ export default function AdminPage() {
 
   // Migration: If vicePrincipals is empty, populate from teachers
   useEffect(() => {
-    if (!isLoading && isLoggedIn && (!data.vicePrincipals || data.vicePrincipals.length === 0)) {
-      const vpsFromTeachers = (data.teachers || [])
+    if (!isLoading && isLoggedIn && localData && (!localData.vicePrincipals || localData.vicePrincipals.length === 0)) {
+      const vpsFromTeachers = (localData.teachers || [])
         .filter(t => t.role === "Müdür Yardımcısı")
         .map(t => ({
           id: t.id,
@@ -122,10 +177,10 @@ export default function AdminPage() {
         }));
       
       if (vpsFromTeachers.length > 0) {
-        updateData("vicePrincipals", vpsFromTeachers);
+        updateLocalData("vicePrincipals", vpsFromTeachers);
       }
     }
-  }, [isLoading, isLoggedIn, data.teachers, data.vicePrincipals, updateData]);
+  }, [isLoading, isLoggedIn, localData]);
 
   const handleLogin = () => {
     setIsLoggedIn(true);
@@ -133,99 +188,103 @@ export default function AdminPage() {
   };
 
   const syncTeachersWithVPs = (newTeachers: Teacher[]) => {
-    updateData("teachers", newTeachers);
-    
-    // Sync to vicePrincipals
-    const currentVPs = [...(data.vicePrincipals || [])];
-    let vpsChanged = false;
+    setLocalData((prev) => {
+      if (!prev) return prev;
+      
+      const currentVPs = [...(prev.vicePrincipals || [])];
+      let vpsChanged = false;
 
-    // Remove VPs that are no longer teachers or don't have the role anymore
-    const updatedVPs = currentVPs.filter(vp => {
-      const teacher = newTeachers.find(t => t.id === vp.id);
-      return teacher && teacher.role === "Müdür Yardımcısı";
-    });
+      // Remove VPs that are no longer teachers or don't have the role anymore
+      const updatedVPs = currentVPs.filter(vp => {
+        const teacher = newTeachers.find(t => t.id === vp.id);
+        return teacher && teacher.role === "Müdür Yardımcısı";
+      });
 
-    if (updatedVPs.length !== currentVPs.length) vpsChanged = true;
+      if (updatedVPs.length !== currentVPs.length) vpsChanged = true;
 
-    // Update names of existing VPs and add new ones
-    newTeachers.forEach(t => {
-      if (t.role === "Müdür Yardımcısı") {
-        const vpIndex = updatedVPs.findIndex(vp => vp.id === t.id);
-        if (vpIndex !== -1) {
-          let vpChanged = false;
-          if (updatedVPs[vpIndex].name !== t.name) {
-            updatedVPs[vpIndex].name = t.name;
-            vpChanged = true;
+      // Update names of existing VPs and add new ones
+      newTeachers.forEach(t => {
+        if (t.role === "Müdür Yardımcısı") {
+          const vpIndex = updatedVPs.findIndex(vp => vp.id === t.id);
+          if (vpIndex !== -1) {
+            let vpChanged = false;
+            if (updatedVPs[vpIndex].name !== t.name) {
+              updatedVPs[vpIndex].name = t.name;
+              vpChanged = true;
+            }
+            if (updatedVPs[vpIndex].visible !== t.visible) {
+              updatedVPs[vpIndex].visible = t.visible ?? true;
+              vpChanged = true;
+            }
+            if (vpChanged) vpsChanged = true;
+          } else {
+            updatedVPs.push({
+              id: t.id,
+              name: t.name,
+              visible: t.visible !== false,
+              availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: false, sunday: false }
+            });
+            vpsChanged = true;
           }
-          if (updatedVPs[vpIndex].visible !== t.visible) {
-            updatedVPs[vpIndex].visible = t.visible ?? true;
-            vpChanged = true;
-          }
-          if (vpChanged) vpsChanged = true;
-        } else {
-          // Add new VP
-          updatedVPs.push({
-            id: t.id,
-            name: t.name,
-            visible: t.visible !== false,
-            availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: false, sunday: false }
-          });
-          vpsChanged = true;
         }
-      }
-    });
+      });
 
-    if (vpsChanged) {
-      updateData("vicePrincipals", updatedVPs);
-    }
+      return { 
+        ...prev, 
+        teachers: newTeachers, 
+        vicePrincipals: vpsChanged ? updatedVPs : prev.vicePrincipals 
+      };
+    });
   };
 
   const syncVPsWithTeachers = (newVPs: VicePrincipal[]) => {
-    updateData("vicePrincipals", newVPs);
+    setLocalData((prev) => {
+      if (!prev) return prev;
+      
+      const currentTeachers = [...(prev.teachers || [])];
+      let teachersChanged = false;
 
-    // Sync to teachers
-    const currentTeachers = [...(data.teachers || [])];
-    let teachersChanged = false;
-
-    // Remove teachers that were VPs and are now gone from VPs list
-    const updatedTeachers = currentTeachers.filter(t => {
-      if (t.role === "Müdür Yardımcısı") {
-        return newVPs.some(vp => vp.id === t.id);
-      }
-      return true;
-    });
-
-    if (updatedTeachers.length !== currentTeachers.length) teachersChanged = true;
-
-    // Update names of existing teachers and add new ones
-    newVPs.forEach(vp => {
-      const teacherIndex = updatedTeachers.findIndex(t => t.id === vp.id);
-      if (teacherIndex !== -1) {
-        let tChanged = false;
-        if (updatedTeachers[teacherIndex].name !== vp.name) {
-          updatedTeachers[teacherIndex].name = vp.name;
-          tChanged = true;
+      // Remove teachers that were VPs and are now gone from VPs list
+      const updatedTeachers = currentTeachers.filter(t => {
+        if (t.role === "Müdür Yardımcısı") {
+          return newVPs.some(vp => vp.id === t.id);
         }
-        if (updatedTeachers[teacherIndex].visible !== vp.visible) {
-          updatedTeachers[teacherIndex].visible = vp.visible ?? true;
-          tChanged = true;
-        }
-        if (tChanged) teachersChanged = true;
-      } else {
-        // Add new teacher as VP
-        updatedTeachers.push({
-          id: vp.id,
-          name: vp.name,
-          role: "Müdür Yardımcısı",
-          visible: vp.visible !== false
-        });
-        teachersChanged = true;
-      }
-    });
+        return true;
+      });
 
-    if (teachersChanged) {
-      updateData("teachers", updatedTeachers);
-    }
+      if (updatedTeachers.length !== currentTeachers.length) teachersChanged = true;
+
+      // Update names of existing teachers and add new ones
+      newVPs.forEach(vp => {
+        const teacherIndex = updatedTeachers.findIndex(t => t.id === vp.id);
+        if (teacherIndex !== -1) {
+          let tChanged = false;
+          if (updatedTeachers[teacherIndex].name !== vp.name) {
+            updatedTeachers[teacherIndex].name = vp.name;
+            tChanged = true;
+          }
+          if (updatedTeachers[teacherIndex].visible !== vp.visible) {
+            updatedTeachers[teacherIndex].visible = vp.visible ?? true;
+            tChanged = true;
+          }
+          if (tChanged) teachersChanged = true;
+        } else {
+          updatedTeachers.push({
+            id: vp.id,
+            name: vp.name,
+            role: "Müdür Yardımcısı",
+            visible: vp.visible !== false
+          });
+          teachersChanged = true;
+        }
+      });
+
+      return { 
+        ...prev, 
+        vicePrincipals: newVPs, 
+        teachers: teachersChanged ? updatedTeachers : prev.teachers 
+      };
+    });
   };
 
   const handleLogout = () => {
@@ -317,63 +376,96 @@ export default function AdminPage() {
             </div>
             <p className="text-muted-foreground text-xs font-medium ml-5 opacity-60">Okul yönetim sistemine hoş geldiniz. Değişiklikler anında panoya yansır.</p>
           </div>
-          <a
-            href="/"
-            target="_blank"
-            className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-foreground/5 border border-border text-xs font-black uppercase tracking-widest hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all group"
-          >
-            <LucideIcons.Monitor className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            Canlı Panoyu Aç
-          </a>
+          
+          <div className="flex items-center gap-4">
+            {hasChanges && (
+              <div className="flex items-center gap-2 animate-fade-up">
+                <button
+                  onClick={handleDiscard}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-black uppercase tracking-widest hover:bg-destructive/20 transition-all disabled:opacity-50"
+                >
+                  <LucideIcons.Undo2 className="w-4 h-4" />
+                  Vazgeç
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-all shadow-xl shadow-primary/25 disabled:opacity-50 relative overflow-hidden"
+                >
+                  {isSaving ? (
+                    <LucideIcons.Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <LucideIcons.Save className="w-4 h-4" />
+                  )}
+                  {isSaving ? "Kaydediliyor..." : "Tümünü Kaydet"}
+                  {hasChanges && !isSaving && (
+                    <span className="absolute top-0 right-0 w-3 h-3 bg-white rounded-full translate-x-1 -translate-y-1" />
+                  )}
+                </button>
+              </div>
+            )}
+            
+            <a
+              href="/"
+              target="_blank"
+              className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-foreground/5 border border-border text-xs font-black uppercase tracking-widest hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all group"
+            >
+              <LucideIcons.Monitor className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              Canlı Panoyu Aç
+            </a>
+          </div>
         </header>
 
         <main className="relative z-10 animate-fade-up" style={{ animationDelay: "100ms" }}>
-          {activeTab === "general" && (
+          {localData && activeTab === "general" && (
             <GeneralEditor 
-              schoolName={data.schoolName} 
-              logo={data.logo}
-              footerText={data.footerText}
-              ataturkImages={data.ataturkImages || []}
-              ataturkInterval={data.ataturkInterval || 300}
-              ataturkVisible={data.ataturkCornerVisible !== false}
-              onUpdateName={(val) => updateData("schoolName", val)} 
-              onUpdateLogo={(val) => updateData("logo", val)}
-              onUpdateFooter={(val) => updateData("footerText", val)}
-              onUpdateAtaturkImages={(val) => updateData("ataturkImages", val)}
-              onUpdateAtaturkInterval={(val) => updateData("ataturkInterval", val)}
-              onUpdateAtaturkVisible={(val) => updateData("ataturkCornerVisible", val)}
+              schoolName={localData.schoolName} 
+              logo={localData.logo}
+              footerText={localData.footerText}
+              ataturkImages={localData.ataturkImages || []}
+              ataturkInterval={localData.ataturkInterval || 300}
+              ataturkVisible={localData.ataturkCornerVisible !== false}
+              onUpdateName={(val) => updateLocalData("schoolName", val)} 
+              onUpdateLogo={(val) => updateLocalData("logo", val)}
+              onUpdateFooter={(val) => updateLocalData("footerText", val)}
+              onUpdateAtaturkImages={(val) => updateLocalData("ataturkImages", val)}
+              onUpdateAtaturkInterval={(val) => updateLocalData("ataturkInterval", val)}
+              onUpdateAtaturkVisible={(val) => updateLocalData("ataturkCornerVisible", val)}
             />
           )}
-          {activeTab === "stats" && <StatsEditor data={data.stats || []} onUpdate={(val) => updateData("stats", val)} />}
-          {activeTab === "announcements" && <AnnouncementsEditor data={data.announcements || []} onUpdate={(val) => updateData("announcements", val)} />}
-          {activeTab === "lessons" && (
+          {localData && activeTab === "stats" && <StatsEditor data={localData.stats || []} onUpdate={(val) => updateLocalData("stats", val)} />}
+          {localData && activeTab === "announcements" && <AnnouncementsEditor data={localData.announcements || []} onUpdate={(val) => updateLocalData("announcements", val)} />}
+          {localData && activeTab === "lessons" && (
             <div className="space-y-10">
               <LessonsEditor 
-                data={data.lessons || []} 
-                onUpdate={(val) => updateData("lessons", val)} 
+                data={localData.lessons || []} 
+                onUpdate={(val) => updateLocalData("lessons", val)} 
                 onUpdateVisible={(val) => {
-                  updateData("lessonsVisible", val);
-                  if (val) updateData("vicePrincipalsVisible", false);
+                  updateLocalData("lessonsVisible", val);
+                  if (val) updateLocalData("vicePrincipalsVisible", false);
                 }} 
               />
               <VicePrincipalsEditor 
-                data={data.vicePrincipals || []} 
-                visible={data.vicePrincipalsVisible}
-                awayMessage={data.vicePrincipalsAwayMessage || ""}
+                data={localData.vicePrincipals || []} 
+                visible={localData.vicePrincipalsVisible !== false}
+                awayMessage={localData.vicePrincipalsAwayMessage || ""}
+                awayIntervals={localData.vicePrincipalsAwayIntervals || [{ from: localData.vicePrincipalsAwayFrom || "13:00", to: localData.vicePrincipalsAwayTo || "13:40" }]}
                 onUpdate={syncVPsWithTeachers} 
                 onUpdateVisible={(val) => {
-                  updateData("vicePrincipalsVisible", val);
-                  if (val) updateData("lessonsVisible", false);
+                  updateLocalData("vicePrincipalsVisible", val);
+                  if (val) updateLocalData("lessonsVisible", false);
                 }} 
-                onUpdateAwayMessage={(val) => updateData("vicePrincipalsAwayMessage", val)}
+                onUpdateAwayMessage={(val) => updateLocalData("vicePrincipalsAwayMessage", val)}
+                onUpdateAwayIntervals={(val) => updateLocalData("vicePrincipalsAwayIntervals", val)}
               />
             </div>
           )}
-          {activeTab === "classes" && <ClassesEditor data={data.classes || []} onUpdate={(val) => updateData("classes", val)} />}
-          {activeTab === "duty" && <DutyEditor data={data.dutyOfficers || []} onUpdate={(val) => updateData("dutyOfficers", val)} />}
-          {activeTab === "departments" && <DepartmentsEditor data={data.departments || []} onUpdate={(val) => updateData("departments", val)} />}
-          {activeTab === "calendar" && <CalendarEditor data={data.calendarEvents || []} onUpdate={(val) => updateData("calendarEvents", val)} />}
-          {activeTab === "teachers" && <TeachersEditor data={data.teachers || []} onUpdate={syncTeachersWithVPs} />}
+          {localData && activeTab === "classes" && <ClassesEditor data={localData.classes || []} onUpdate={(val) => updateLocalData("classes", val)} />}
+          {localData && activeTab === "duty" && <DutyEditor data={localData.dutyOfficers || []} onUpdate={(val) => updateLocalData("dutyOfficers", val)} />}
+          {localData && activeTab === "departments" && <DepartmentsEditor data={localData.departments || []} onUpdate={(val) => updateLocalData("departments", val)} />}
+          {localData && activeTab === "calendar" && <CalendarEditor data={localData.calendarEvents || []} onUpdate={(val) => updateLocalData("calendarEvents", val)} />}
+          {localData && activeTab === "teachers" && <TeachersEditor data={localData.teachers || []} onUpdate={syncTeachersWithVPs} />}
         </main>
       </div>
     </div>
@@ -790,13 +882,15 @@ function LessonsEditor({ data, onUpdate, onUpdateVisible }: { data: Lesson[], on
   );
 }
 
-function VicePrincipalsEditor({ data, visible, awayMessage, onUpdate, onUpdateVisible, onUpdateAwayMessage }: { 
+function VicePrincipalsEditor({ data, visible, awayMessage, awayIntervals, onUpdate, onUpdateVisible, onUpdateAwayMessage, onUpdateAwayIntervals }: { 
   data: VicePrincipal[], 
   visible: boolean,
   awayMessage: string,
+  awayIntervals: TimeInterval[],
   onUpdate: (data: VicePrincipal[]) => void, 
   onUpdateVisible: (val: boolean) => void,
-  onUpdateAwayMessage: (val: string) => void
+  onUpdateAwayMessage: (val: string) => void,
+  onUpdateAwayIntervals: (val: TimeInterval[]) => void,
 }) {
   const days = [
     { key: "monday", label: "Pazartesi" },
@@ -833,10 +927,10 @@ function VicePrincipalsEditor({ data, visible, awayMessage, onUpdate, onUpdateVi
           </div>
         </div>
         <button 
-          onClick={() => onUpdateVisible(visible === false ? true : false)}
-          className={`w-14 h-7 rounded-full relative transition-all ${visible !== false ? 'bg-violet-600' : 'bg-slate-800'}`}
+          onClick={() => onUpdateVisible(!visible)}
+          className={`w-14 h-7 rounded-full relative transition-all ${visible ? 'bg-violet-600' : 'bg-slate-800'}`}
         >
-          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${visible !== false ? 'left-8' : 'left-1'}`} />
+          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${visible ? 'left-8' : 'left-1'}`} />
         </button>
       </div>
       
@@ -853,7 +947,54 @@ function VicePrincipalsEditor({ data, visible, awayMessage, onUpdate, onUpdateVi
           onChange={e => onUpdateAwayMessage(e.target.value)}
           placeholder="Örn: Müdür yardımcılarımız şu an öğle arasındadır..."
         />
-        <p className="text-[10px] text-slate-500 font-bold italic">Bu mesaj, müdür yardımcıları görünürlüğü açık olduğu halde kimse müsait değilse veya öğle arasındaysa ekranda görünecektir.</p>
+        <div className="space-y-4">
+          {awayIntervals.map((interval, idx) => (
+            <div key={`${interval.from}-${interval.to}-${idx}`} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+              <label className="flex flex-col gap-2 text-[10px] uppercase tracking-[0.19em] text-slate-400 font-black">
+                Başlangıç Saati
+                <input
+                  type="time"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-violet-500 transition-all"
+                  value={interval.from}
+                  onChange={e => {
+                    const next = awayIntervals.map((item, i) => i === idx ? { ...item, from: e.target.value } : item);
+                    onUpdateAwayIntervals(next);
+                  }}
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-[10px] uppercase tracking-[0.19em] text-slate-400 font-black">
+                Bitiş Saati
+                <input
+                  type="time"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-violet-500 transition-all"
+                  value={interval.to}
+                  onChange={e => {
+                    const next = awayIntervals.map((item, i) => i === idx ? { ...item, to: e.target.value } : item);
+                    onUpdateAwayIntervals(next);
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = awayIntervals.filter((_, i) => i !== idx);
+                  onUpdateAwayIntervals(next.length ? next : [{ from: "13:00", to: "13:40" }]);
+                }}
+                className="h-11 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-black uppercase tracking-[0.2em]"
+              >
+                Sil
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => onUpdateAwayIntervals([...awayIntervals, { from: "13:00", to: "13:40" }])}
+            className="w-full rounded-2xl bg-primary/10 border border-primary/20 text-primary font-black uppercase tracking-[0.2em] py-3 hover:bg-primary/15 transition-all"
+          >
+            + Yeni Zaman Aralığı Ekle
+          </button>
+        </div>
+        <p className="text-[10px] text-slate-500 font-bold italic">Bu mesaj, müdür yardımcıları görünürlüğü açık olduğu halde kimse müsait değilse veya seçili zaman aralığında ekranda görünecektir.</p>
       </div>
 
       <div className="bg-[#0c1829] border border-white/[0.06] rounded-2xl overflow-hidden shadow-2xl">
@@ -901,23 +1042,25 @@ function VicePrincipalsEditor({ data, visible, awayMessage, onUpdate, onUpdateVi
                     key={day.key}
                     onClick={() => {
                       const newData = [...data];
+                      // Güvenli erişim: Eğer gün değeri yoksa false kabul et ve tersine çevir
+                      const currentVal = !!(vp.availability as any)[day.key];
                       newData[idx] = { 
                         ...vp, 
                         availability: { 
                           ...vp.availability, 
-                          [day.key]: !vp.availability[day.key as keyof typeof vp.availability] 
+                          [day.key]: !currentVal 
                         } 
                       };
                       onUpdate(newData);
                     }}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
-                      vp.availability[day.key as keyof typeof vp.availability] 
+                      (vp.availability as any)[day.key]
                         ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
                         : 'bg-white/5 border-white/10 text-slate-600'
                     }`}
                   >
                     <span className="text-[9px] font-black uppercase tracking-tighter">{day.label}</span>
-                    {vp.availability[day.key as keyof typeof vp.availability] ? (
+                    {(vp.availability as any)[day.key] ? (
                       <LucideIcons.CheckCircle2 className="w-4 h-4" />
                     ) : (
                       <LucideIcons.XCircle className="w-4 h-4 opacity-50" />

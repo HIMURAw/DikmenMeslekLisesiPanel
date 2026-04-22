@@ -11,6 +11,17 @@ const SchoolDataSchema = new Schema({
   ataturkInterval: { type: Number, default: 300 },
   ataturkQuotes: { type: [String], default: [] },
   vicePrincipalsAwayMessage: { type: String, default: "Müdür yardımcılarımız şu an odalarında bulunmamaktadır." },
+  vicePrincipalsAwayIntervals: {
+    type: [
+      {
+        from: String,
+        to: String,
+      }
+    ],
+    default: [{ from: "13:00", to: "13:40" }]
+  },
+  vicePrincipalsAwayFrom: { type: String, default: "13:00" },
+  vicePrincipalsAwayTo: { type: String, default: "13:40" },
   stats: [
     {
       id: String,

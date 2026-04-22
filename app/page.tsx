@@ -300,6 +300,32 @@ export default function Dashboard() {
   const { data, isLoading } = useStore();
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  const parseTime = (value: string) => {
+    const parts = value.split(":").map((part) => Number(part));
+    if (parts.length !== 2 || parts.some((n) => Number.isNaN(n))) return null;
+    return parts[0] * 60 + parts[1];
+  };
+
+  const awayIntervals = (data.vicePrincipalsAwayIntervals && data.vicePrincipalsAwayIntervals.length > 0)
+    ? data.vicePrincipalsAwayIntervals
+    : [{ from: data.vicePrincipalsAwayFrom || "13:00", to: data.vicePrincipalsAwayTo || "13:40" }];
+
+  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+  const isTimeInInterval = (interval: { from: string; to: string }) => {
+    const from = parseTime(interval.from) ?? 13 * 60;
+    const to = parseTime(interval.to) ?? 13 * 60 + 40;
+    return from <= to
+      ? nowMinutes >= from && nowMinutes <= to
+      : nowMinutes >= from || nowMinutes <= to;
+  };
+
+  const activeAwayIntervals = awayIntervals.filter(isTimeInInterval);
+  const awayIntervalLabel = activeAwayIntervals.length > 0
+    ? activeAwayIntervals.map((interval) => `${interval.from} - ${interval.to}`).join(" / ")
+    : awayIntervals.map((interval) => `${interval.from} - ${interval.to}`).join(" / ");
+  const isAwayTime = activeAwayIntervals.length > 0;
+  const showVicePrincipalsCard = data.lessonsVisible !== false || data.vicePrincipalsVisible !== false || isAwayTime;
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -466,22 +492,26 @@ export default function Dashboard() {
           )}
 
           {/* Center: Schedule / VPs */}
-          {(data.lessonsVisible !== false || data.vicePrincipalsVisible) && (
+          {showVicePrincipalsCard && (
             <div className="col-span-3 h-full rounded-2xl bg-card border border-white/5 shadow-2xl overflow-hidden flex flex-col relative group">
               <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
               
               {(() => {
-                const hour = currentTime.getHours();
-                const minutes = currentTime.getMinutes();
-                const isBreakTime = hour === 13 && minutes >= 0 && minutes <= 40;
+                const awayMessage = data.vicePrincipalsAwayMessage?.trim() || "Müdür yardımcılarımız şu an odalarında bulunmamaktadır.";
+                const isBreakTime = isAwayTime;
+                const vicePrincipalsEnabled = data.vicePrincipalsVisible !== false;
 
-                if (data.vicePrincipalsVisible) {
-                  const dayNames: { [key: number]: keyof VicePrincipal["availability"] } = {
-                    0: "sunday", 1: "monday", 2: "tuesday", 3: "wednesday", 4: "thursday", 5: "friday", 6: "saturday"
-                  };
-                  const todayKey = dayNames[currentTime.getDay()];
-                  const visibleVPs = todayKey ? (data.vicePrincipals || []).filter(vp => vp.availability[todayKey] && vp.visible !== false) : [];
+                const dayNames: { [key: number]: keyof VicePrincipal["availability"] } = {
+                  0: "sunday", 1: "monday", 2: "tuesday", 3: "wednesday", 4: "thursday", 5: "friday", 6: "saturday"
+                };
+                const todayKey = dayNames[currentTime.getDay()];
+                const isWeekend = todayKey === 'saturday' || todayKey === 'sunday';
+                const visibleVPs = isWeekend ? [] : (todayKey ? (data.vicePrincipals || []).filter(vp => {
+                  const isAvailable = !!(vp.availability as any)[todayKey];
+                  return isAvailable && vp.visible !== false;
+                }) : []);
 
+                if (isAwayTime) {
                   return (
                     <>
                       <div className="px-5 py-3.5 border-b border-white/5 bg-foreground/[0.02] relative z-10">
@@ -492,29 +522,61 @@ export default function Dashboard() {
                           <h2 className="text-[14px] font-black text-foreground uppercase tracking-widest">Müsait Müdür Yardımcıları</h2>
                         </div>
                       </div>
-                      
-                      <div className="overflow-y-auto scrollbar-hidden flex-1 p-0 relative z-10 flex flex-col">
-                        {isBreakTime || visibleVPs.length === 0 ? (
-                          <div className="flex-1 flex flex-col p-6 h-full relative group">
-                            {/* Decorative corner borders - Highly Visible "Köşe" Style */}
-                            <div className="absolute top-8 left-8 w-12 h-12 border-t-[3px] border-l-[3px] border-primary/40 rounded-tl-2xl z-20 transition-all group-hover:border-primary group-hover:w-16 group-hover:h-16" />
-                            <div className="absolute top-8 right-8 w-12 h-12 border-t-[3px] border-r-[3px] border-primary/40 rounded-tr-2xl z-20 transition-all group-hover:border-primary group-hover:w-16 group-hover:h-16" />
-                            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-[3px] border-l-[3px] border-primary/40 rounded-bl-2xl z-20 transition-all group-hover:border-primary group-hover:w-16 group-hover:h-16" />
-                            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-[3px] border-r-[3px] border-primary/40 rounded-br-2xl z-20 transition-all group-hover:border-primary group-hover:w-16 group-hover:h-16" />
+                      <div className="flex-1 p-4 flex flex-col justify-center text-center relative z-10">
+                        <div className="relative z-10 space-y-10 max-w-[280px] mx-auto">
+                          <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto shadow-2xl shadow-primary/20 relative">
+                            <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                            <LucideIcons.Clock className="w-12 h-12 text-primary relative z-10" />
+                          </div>
+                          <div className="space-y-6 pt-6 border-t border-white/10 relative">
+                            <LucideIcons.Quote className="w-8 h-8 text-primary/10 absolute -top-4 left-1/2 -translate-x-1/2 bg-transparent px-2" />
+                            <p className="text-[19px] sm:text-[22px] font-black text-foreground leading-[1.4] uppercase tracking-tight italic drop-shadow-2xl">
+                              "{awayMessage}"
+                            </p>
+                            <div className="h-1 w-16 bg-primary/60 mx-auto rounded-full shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
+                            <div className="pt-2">
+                              <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] opacity-80">
+                                DİJİTAL BİLGİLENDİRME SİSTEMİ
+                              </p>
+                              <p className="text-[9px] text-muted-foreground font-bold mt-2 opacity-30">© DİKMEN MTAL</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-8 px-8 py-2.5 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-xl shadow-2xl inline-flex mx-auto">
+                          <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            SAAT ARALIĞI: {awayIntervalLabel}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  );
+                }
 
-                            <div className="flex-1 bg-[#0c1420] border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-[0_0_50px_rgba(var(--primary),0.05)]">
-                              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/10 opacity-30" />
-                              
-                              <div className="relative z-10 space-y-10 max-w-[280px]">
+                if (vicePrincipalsEnabled) {
+                  return (
+                    <>
+                      <div className="px-5 py-3.5 border-b border-white/5 bg-foreground/[0.02] relative z-10">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                            <LucideIcons.UserCheck className="w-5 h-5 text-primary" />
+                          </div>
+                          <h2 className="text-[14px] font-black text-foreground uppercase tracking-widest">Müsait Müdür Yardımcıları</h2>
+                        </div>
+                      </div>
+                      <div className="overflow-y-auto scrollbar-hidden flex-1 p-0 relative z-10 flex flex-col">
+                        {visibleVPs.length === 0 ? (
+                          <div className="flex-1 flex flex-col p-4 h-full relative group">
+                            <div className="flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                              <div className="relative z-10 space-y-10 max-w-[280px] mx-auto">
                                 <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto shadow-2xl shadow-primary/20 relative">
                                   <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
                                   <LucideIcons.Clock className="w-12 h-12 text-primary relative z-10" />
                                 </div>
-                                
                                 <div className="space-y-6 pt-6 border-t border-white/10 relative">
-                                  <LucideIcons.Quote className="w-8 h-8 text-primary/10 absolute -top-4 left-1/2 -translate-x-1/2 bg-[#0c1420] px-2" />
+                                  <LucideIcons.Quote className="w-8 h-8 text-primary/10 absolute -top-4 left-1/2 -translate-x-1/2 bg-transparent px-2" />
                                   <p className="text-[19px] sm:text-[22px] font-black text-foreground leading-[1.4] uppercase tracking-tight italic drop-shadow-2xl">
-                                    "{data.vicePrincipalsAwayMessage || (isBreakTime ? 'Müdür yardımcılarımız şu an öğle arasındadır.' : 'Müdür yardımcılarımız şu an odalarında bulunmamaktadır.')}"
+                                    "{awayMessage}"
                                   </p>
                                   <div className="h-1 w-16 bg-primary/60 mx-auto rounded-full shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
                                   <div className="pt-2">
@@ -525,17 +587,12 @@ export default function Dashboard() {
                                   </div>
                                 </div>
                               </div>
-
-                              {isBreakTime && (
-                                <div className="absolute bottom-10 left-0 right-0 flex justify-center">
-                                  <div className="px-8 py-2.5 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-xl shadow-2xl">
-                                    <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                      ÖĞLE ARASI: 13:00 - 13:40
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
+                              <div className="mt-8 px-8 py-2.5 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-xl shadow-2xl inline-flex mx-auto">
+                                <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                  SAAT ARALIĞI: {awayFrom} - {awayTo}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         ) : (

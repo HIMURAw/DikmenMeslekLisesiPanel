@@ -20,20 +20,23 @@ const DEFAULT_DATA: SchoolData = {
   classes: [],
   logo: "",
   lessonsVisible: true,
-  vicePrincipalsVisible: false,
+  vicePrincipalsVisible: true,
   ataturkCornerVisible: true,
   footerText: "Alt bilgi buraya gelecek...",
   ataturkImages: [],
   ataturkInterval: 300,
   ataturkQuotes: [],
   vicePrincipalsAwayMessage: "Müdür yardımcılarımız şu an odalarında bulunmamaktadır.",
+  vicePrincipalsAwayIntervals: [{ from: "13:00", to: "13:40" }],
+  vicePrincipalsAwayFrom: "13:00",
+  vicePrincipalsAwayTo: "13:40",
   vicePrincipals: []
 };
 
 
 interface StoreContextType {
   data: SchoolData;
-  setData: (data: SchoolData) => void;
+  setData: (data: SchoolData) => Promise<boolean>;
   updateData: <K extends keyof SchoolData>(key: K, value: SchoolData[K]) => void;
   isLoading: boolean;
 }
@@ -44,15 +47,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [data, setDataState] = useState<SchoolData>(DEFAULT_DATA);
   const [isLoading, setIsLoading] = useState(true);
 
-  const syncToBackend = useCallback(async (newData: SchoolData) => {
+  const syncToBackend = useCallback(async (newData: SchoolData): Promise<boolean> => {
     try {
-      await fetch("/api/data", {
+      const res = await fetch("/api/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newData),
       });
-    } catch (e) {
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Sunucu hatası");
+      }
+      return true;
+    } catch (e: any) {
       console.error("Sync error:", e);
+      return false;
     }
   }, []);
 
@@ -82,19 +91,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Live refresh every 5 seconds
     const interval = setInterval(fetchFromBackend, 5000);
-    
+
     // Refresh instantly when window is focused
     window.addEventListener("focus", fetchFromBackend);
-    
+
     return () => {
       clearInterval(interval);
       window.removeEventListener("focus", fetchFromBackend);
     };
   }, [fetchFromBackend]);
 
-  const setData = (newData: SchoolData) => {
+  const setData = async (newData: SchoolData): Promise<boolean> => {
     setDataState(newData);
-    syncToBackend(newData);
+    const success = await syncToBackend(newData);
+    return success;
   };
 
   const updateData = <K extends keyof SchoolData>(key: K, value: SchoolData[K]) => {

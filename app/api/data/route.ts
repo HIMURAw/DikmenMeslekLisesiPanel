@@ -24,16 +24,18 @@ export async function POST(req: Request) {
     await dbConnect();
     const body = await req.json();
     
-    // We update the existing document or create a new one if it doesn't exist
-    // Using { upsert: true } and empty filter since we only have one doc.
+    // Teknik alanları temizleyerek veritabanı hatalarını önleyelim
+    const { _id, __v, createdAt, updatedAt, ...updateData } = body;
+
     const updatedData = await SchoolData.findOneAndUpdate(
       {},
-      body,
+      updateData,
       { upsert: true, new: true, runValidators: true }
     );
 
     return NextResponse.json(updatedData);
   } catch (error: any) {
+    console.error("API POST Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

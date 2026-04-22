@@ -83,6 +83,11 @@ export interface VicePrincipal {
   };
 }
 
+export interface TimeInterval {
+  from: string;
+  to: string;
+}
+
 export interface SchoolData {
   stats: StatItem[];
   lessons: Lesson[];
@@ -102,5 +107,8 @@ export interface SchoolData {
   ataturkInterval: number;
   ataturkQuotes: string[];
   vicePrincipalsAwayMessage?: string;
+  vicePrincipalsAwayIntervals?: TimeInterval[];
+  vicePrincipalsAwayFrom?: string;
+  vicePrincipalsAwayTo?: string;
   vicePrincipals: VicePrincipal[];
 }
