@@ -590,7 +590,7 @@ export default function Dashboard() {
                               <div className="mt-8 px-8 py-2.5 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-xl shadow-2xl inline-flex mx-auto">
                                 <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
                                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                  SAAT ARALIĞI: {awayFrom} - {awayTo}
+                                  SAAT ARALIĞI: {awayIntervalLabel}
                                 </p>
                               </div>
                             </div>
